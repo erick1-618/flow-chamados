@@ -24,15 +24,15 @@ export const TagBadge = ({ tag, size = 'md' }: { tag?: string; size?: 'sm' | 'md
 
 
 export interface ComplexityOption {
-  id: 'baixo' | 'medio' | 'moderado';
+  id: 'baixa' | 'media' | 'alta';
   label: string;
   colorName: string;
 }
 
 export const COMPLEXITY_OPTIONS: ComplexityOption[] = [
-  { id: 'baixo', label: 'Baixo', colorName: 'verde' },
-  { id: 'medio', label: 'Médio', colorName: 'amarelo' },
-  { id: 'moderado', label: 'Moderado', colorName: 'vermelho' },
+  { id: 'baixa', label: 'Baixa', colorName: 'verde' },
+  { id: 'media', label: 'Média', colorName: 'amarelo' },
+  { id: 'alta', label: 'Alta', colorName: 'vermelho' },
 ];
 
 export const ComplexityBadge = ({
@@ -44,11 +44,11 @@ export const ComplexityBadge = ({
 }) => {
   if (!complexidade) return null;
   const lower = complexidade.toLowerCase();
-  let colorClass = 'complexity-tag-baixo';
-  if (lower.includes('médio') || lower.includes('medio')) {
-    colorClass = 'complexity-tag-medio';
-  } else if (lower.includes('moderado')) {
-    colorClass = 'complexity-tag-moderado';
+  let colorClass = 'complexity-tag-baixa';
+  if (lower.includes('méd') || lower.includes('med')) {
+    colorClass = 'complexity-tag-media';
+  } else if (lower.includes('alt') || lower.includes('moderado')) {
+    colorClass = 'complexity-tag-alta';
   }
 
   return (

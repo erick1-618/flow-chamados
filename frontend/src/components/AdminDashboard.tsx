@@ -57,7 +57,7 @@ export const AdminDashboard = ({
   const [manualTitulo, setManualTitulo] = useState('');
   const [manualDescricao, setManualDescricao] = useState('');
   const [manualTag, setManualTag] = useState<string>('suporte-ti');
-  const [manualComplexidade, setManualComplexidade] = useState<string>('Baixo');
+  const [manualComplexidade, setManualComplexidade] = useState<string>('Baixa');
   const [manualDataCard, setManualDataCard] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [salvandoManual, setSalvandoManual] = useState(false);
 
@@ -161,7 +161,7 @@ export const AdminDashboard = ({
       setManualTitulo('');
       setManualDescricao('');
       setManualTag('suporte-ti');
-      setManualComplexidade('Baixo');
+      setManualComplexidade('Baixa');
       addToast(`Chamado manual ${created.protocolo} criado e sincronizado no Trello!`, 'success');
       onReloadTickets();
     } catch (err: unknown) {
@@ -195,9 +195,9 @@ export const AdminDashboard = ({
   const getComplexityWeight = (comp?: string): number => {
     if (!comp) return 0;
     const lower = comp.toLowerCase();
-    if (lower.includes('moderado')) return 3;
-    if (lower.includes('médio') || lower.includes('medio')) return 2;
-    if (lower.includes('baixo')) return 1;
+    if (lower.includes('alt') || lower.includes('moderado')) return 3;
+    if (lower.includes('méd') || lower.includes('med')) return 2;
+    if (lower.includes('baix')) return 1;
     return 0;
   };
 
@@ -394,8 +394,8 @@ export const AdminDashboard = ({
             <option value="recentes">Mais recentes</option>
             <option value="conclusao_asc">Conclusão requerida (Mais próxima)</option>
             <option value="conclusao_desc">Conclusão requerida (Mais distante)</option>
-            <option value="complexidade_desc">Ordem de Complexidade (Moderado ➔ Baixo)</option>
-            <option value="complexidade_asc">Ordem de Complexidade (Baixo ➔ Moderado)</option>
+            <option value="complexidade_desc">Ordem de Complexidade (Alta ➔ Baixa)</option>
+            <option value="complexidade_asc">Ordem de Complexidade (Baixa ➔ Alta)</option>
           </select>
 
           <select
@@ -405,9 +405,9 @@ export const AdminDashboard = ({
             title="Filtrar por Complexidade"
           >
             <option value="">Todas as Complexidades</option>
-            <option value="Baixo">Baixo</option>
-            <option value="Médio">Médio</option>
-            <option value="Moderado">Moderado</option>
+            <option value="Baixa">Baixa</option>
+            <option value="Média">Média</option>
+            <option value="Alta">Alta</option>
           </select>
 
           {(filtroStatus || filtroCategoria || filtroComplexidade || filtroBusca || ordenacao !== 'recentes') && (
@@ -776,9 +776,9 @@ export const AdminDashboard = ({
                     className="select-status"
                     style={{ width: '100%', height: '38px' }}
                   >
-                    <option value="Baixo">Baixo</option>
-                    <option value="Médio">Médio</option>
-                    <option value="Moderado">Moderado</option>
+                    <option value="Baixa">Baixa</option>
+                    <option value="Média">Média</option>
+                    <option value="Alta">Alta</option>
                   </select>
                 </div>
               </div>

@@ -32,7 +32,7 @@ export const Header = ({ activeTab, onTabChange }: HeaderProps) => {
               <span className="brand-title-primary">Flow</span>
               <span className="brand-title-secondary">Chamados</span>
             </div>
-            <span className="brand-caption">Central de Atendimento Corporativo</span>
+            <span className="brand-caption">Central de Atendimento</span>
           </div>
         </div>
 

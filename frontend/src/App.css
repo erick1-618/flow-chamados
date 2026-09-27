@@ -1513,7 +1513,7 @@ body {
 }
 
 /* =====================================================================
-   COMPLEXIDADE (BAIXO, MÉDIO, MODERADO) & DATA DO CARD
+   COMPLEXIDADE (BAIXA, MÉDIA, ALTA) & DATA DO CARD
    ===================================================================== */
 .complexity-pill {
   display: inline-flex;
@@ -1540,10 +1540,13 @@ body {
   transition: background-color 0.15s;
 }
 
+.complexity-baixa .complexity-dot,
 .complexity-baixo .complexity-dot {
   background-color: #10b981;
 }
 
+.complexity-baixa:hover,
+.complexity-baixa.active,
 .complexity-baixo:hover,
 .complexity-baixo.active {
   background-color: #ecfdf5;
@@ -1552,10 +1555,13 @@ body {
   font-weight: 600;
 }
 
+.complexity-media .complexity-dot,
 .complexity-medio .complexity-dot {
   background-color: #f59e0b;
 }
 
+.complexity-media:hover,
+.complexity-media.active,
 .complexity-medio:hover,
 .complexity-medio.active {
   background-color: #fffbeb;
@@ -1564,10 +1570,13 @@ body {
   font-weight: 600;
 }
 
+.complexity-alta .complexity-dot,
 .complexity-moderado .complexity-dot {
   background-color: #ef4444;
 }
 
+.complexity-alta:hover,
+.complexity-alta.active,
 .complexity-moderado:hover,
 .complexity-moderado.active {
   background-color: #fef2f2;
@@ -1600,29 +1609,35 @@ body {
   border-radius: 50%;
 }
 
+.complexity-tag-baixa,
 .complexity-tag-baixo {
   background-color: #ecfdf5;
   border-color: #a7f3d0;
   color: #047857;
 }
+.complexity-tag-baixa .complexity-badge-dot,
 .complexity-tag-baixo .complexity-badge-dot {
   background-color: #10b981;
 }
 
+.complexity-tag-media,
 .complexity-tag-medio {
   background-color: #fffbeb;
   border-color: #fde68a;
   color: #b45309;
 }
+.complexity-tag-media .complexity-badge-dot,
 .complexity-tag-medio .complexity-badge-dot {
   background-color: #f59e0b;
 }
 
+.complexity-tag-alta,
 .complexity-tag-moderado {
   background-color: #fef2f2;
   border-color: #fecaca;
   color: #b91c1c;
 }
+.complexity-tag-alta .complexity-badge-dot,
 .complexity-tag-moderado .complexity-badge-dot {
   background-color: #ef4444;
 }

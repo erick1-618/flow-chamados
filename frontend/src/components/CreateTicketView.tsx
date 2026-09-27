@@ -20,7 +20,7 @@ export const CreateTicketView = ({
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('academico');
-  const [selectedComplexidade, setSelectedComplexidade] = useState<string>('Baixo');
+  const [selectedComplexidade, setSelectedComplexidade] = useState<string>('Baixa');
   const [dataCard, setDataCard] = useState<string>(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -214,7 +214,7 @@ export const CreateTicketView = ({
               </div>
             </div>
 
-            {/* Seletor de Complexidade (Baixo, Médio, Moderado) e Data do Card */}
+            {/* Seletor de Complexidade (Baixa, Média, Alta) e Data do Card */}
             <div className="form-row-2">
               <div className="form-field">
                 <label>Complexidade do Chamado</label>

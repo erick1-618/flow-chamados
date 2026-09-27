@@ -7,7 +7,7 @@ O **Flow Chamados** é um sistema corporativo para abertura, gestão e acompanha
 ## O que a aplicação faz
 
 ### 1. Abertura Simplificada de Chamados (Usuário / Solicitante)
-- Permite que qualquer usuário abra uma solicitação informando **Nome**, **E-mail**, **Assunto**, **Descrição detalhada**, **Classe do Chamado** (`academico`, `pessoal`, `comunidade`, `suporte-ti`), **Complexidade** (`Baixo`, `Médio`, `Moderado`) e **Data do Chamado**.
+- Permite que qualquer usuário abra uma solicitação informando **Nome**, **E-mail**, **Assunto**, **Descrição detalhada**, **Classe do Chamado** (`academico`, `pessoal`, `comunidade`, `suporte-ti`), **Complexidade** (`Baixa`, `Média`, `Alta`) e **Data de Entrega**.
 - Gera automaticamente um código de **Protocolo exclusivo** (ex: `FLOW-1045`) para identificação e consulta.
 - Cria imediatamente o cartão correspondente no **Trello** na coluna inicial (`Criado`), com as etiquetas de classe e complexidade (com cores associadas), prazo definido e link direto para atendimento.
 

@@ -223,11 +223,16 @@ public class TrelloService {
     private String getComplexityColor(String complexidade) {
         if (complexidade == null) return "green";
         switch (complexidade.trim().toLowerCase()) {
+            case "baixa":
             case "baixo":
                 return "green";
+            case "média":
+            case "media":
             case "médio":
             case "medio":
                 return "yellow";
+            case "alta":
+            case "alto":
             case "moderado":
                 return "red";
             default:
