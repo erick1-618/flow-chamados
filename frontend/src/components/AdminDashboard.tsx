@@ -52,13 +52,15 @@ export const AdminDashboard = ({
   // Autenticação simples com a chave corporativa
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminKey.trim()) return;
+    const keyTrim = adminKey.trim();
+    if (!keyTrim) return;
 
     setAuthError(null);
     try {
-      await api.listAdminTickets(adminKey.trim());
+      await api.listAdminTickets(keyTrim);
       setIsAdminAuth(true);
-      localStorage.setItem('flow_admin_key', adminKey.trim());
+      sessionStorage.setItem('flow_admin_key', keyTrim);
+      localStorage.removeItem('flow_admin_key'); // limpa chave antiga de versoes anteriores
       addToast('Acesso administrativo autenticado!', 'success');
       onReloadTickets();
     } catch (err: unknown) {
@@ -70,6 +72,9 @@ export const AdminDashboard = ({
 
   const handleLogout = () => {
     setIsAdminAuth(false);
+    setAdminKey('');
+    sessionStorage.removeItem('flow_admin_key');
+    localStorage.removeItem('flow_admin_key');
     setSelectedTicket(null);
     addToast('Sessão administrativa encerrada.', 'info');
   };

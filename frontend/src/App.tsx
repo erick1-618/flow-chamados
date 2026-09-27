@@ -17,9 +17,9 @@ export function App() {
   const [trackEmail, setTrackEmail] = useState('');
   const [ticketAtual, setTicketAtual] = useState<Ticket | null>(null);
 
-  // Estado do Admin
+  // Estado do Admin (campo inicia vazio por segurança)
   const [adminKey, setAdminKey] = useState<string>(
-    () => localStorage.getItem('flow_admin_key') || 'flow-admin-secret-2026'
+    () => sessionStorage.getItem('flow_admin_key') || ''
   );
   const [isAdminAuth, setIsAdminAuth] = useState(false);
   const [adminTickets, setAdminTickets] = useState<Ticket[]>([]);
