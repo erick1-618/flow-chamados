@@ -8,12 +8,16 @@ import com.flow.model.Ticket;
 import com.flow.model.TicketStatus;
 import com.flow.repository.MessageRepository;
 import com.flow.repository.TicketRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -139,12 +143,34 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public List<Ticket> listTicketsForAdmin(TicketStatus status, LocalDateTime dataInicio, LocalDateTime dataFim, String search) {
-        return ticketRepository.findWithFilters(status, dataInicio, dataFim, (search != null && !search.isBlank()) ? search.trim() : null);
+        Specification<Ticket> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (dataInicio != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), dataInicio));
+            }
+            if (dataFim != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), dataFim));
+            }
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("titulo")), pattern),
+                        cb.like(cb.lower(root.get("protocolo")), pattern),
+                        cb.like(cb.lower(root.get("solicitanteNome")), pattern),
+                        cb.like(cb.lower(root.get("solicitanteEmail")), pattern)
+                ));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return ticketRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     @Transactional(readOnly = true)
     public Ticket findById(Long id) {
-        return ticketRepository.findById(id)
+        return ticketRepository.findByIdWithMessages(id)
                 .orElseThrow(() -> new NoSuchElementException("Chamado não encontrado com o ID: " + id));
     }
 
