@@ -4,7 +4,7 @@ Sistema de chamados com fluxo de atendimento sincronizado estritamente via Webho
 
 ---
 
-## 1. 🏗️ Arquitetura de Produção
+## 1. Arquitetura de Produção
 
 ```mermaid
 flowchart TD
