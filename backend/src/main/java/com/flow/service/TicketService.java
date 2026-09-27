@@ -60,13 +60,23 @@ public class TicketService {
             ticket.setTag(request.getTag().trim());
         }
 
+        if (request.getComplexidade() != null && !request.getComplexidade().isBlank()) {
+            ticket.setComplexidade(request.getComplexidade().trim());
+        }
+
+        if (request.getDataCard() != null) {
+            ticket.setDataCard(request.getDataCard());
+        }
+
         TrelloCardResult trelloResult = trelloService.createCard(
                 protocolo,
                 ticket.getTitulo(),
                 ticket.getSolicitanteNome(),
                 ticket.getSolicitanteEmail(),
                 ticket.getDescricao(),
-                ticket.getTag()
+                ticket.getTag(),
+                ticket.getComplexidade(),
+                ticket.getDataCard()
         );
 
         ticket.setTrelloCardId(trelloResult.getCardId());
@@ -74,6 +84,7 @@ public class TicketService {
         ticket.setTrelloCardUrl(trelloResult.getCardUrl());
 
         return ticketRepository.save(ticket);
+
 
     }
 

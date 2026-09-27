@@ -2,6 +2,7 @@ package com.flow.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,9 +49,15 @@ public class Ticket {
     @Column(name = "tag", length = 50)
     private String tag;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "complexidade", length = 30)
+    private String complexidade;
 
+    @Column(name = "data_card")
+    private LocalDate dataCard;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -178,6 +185,23 @@ public class Ticket {
     public void setTag(String tag) {
         this.tag = tag;
     }
+
+    public String getComplexidade() {
+        return complexidade;
+    }
+
+    public void setComplexidade(String complexidade) {
+        this.complexidade = complexidade;
+    }
+
+    public LocalDate getDataCard() {
+        return dataCard;
+    }
+
+    public void setDataCard(LocalDate dataCard) {
+        this.dataCard = dataCard;
+    }
+
 
     public LocalDateTime getCreatedAt() {
 

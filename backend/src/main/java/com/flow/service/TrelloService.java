@@ -10,7 +10,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +38,9 @@ public class TrelloService {
     @Value("${trello.webhook-callback-url:http://localhost:8080/api/webhooks/trello}")
     private String webhookCallbackUrl;
 
+    @Value("${app.frontend-url:https://flow.erickborba.dev.br}")
+    private String frontendUrl;
+
     @Value("${trello.lists.criado:list_id_criado}")
     private String listCriadoId;
 
@@ -60,7 +65,7 @@ public class TrelloService {
             String solicitanteEmail,
             String descricao
     ) {
-        return createCard(protocolo, titulo, solicitanteNome, solicitanteEmail, descricao, null);
+        return createCard(protocolo, titulo, solicitanteNome, solicitanteEmail, descricao, null, null, null);
     }
 
     public TrelloCardResult createCard(
@@ -71,9 +76,29 @@ public class TrelloService {
             String descricao,
             String tag
     ) {
+        return createCard(protocolo, titulo, solicitanteNome, solicitanteEmail, descricao, tag, null, null);
+    }
+
+    public TrelloCardResult createCard(
+            String protocolo,
+            String titulo,
+            String solicitanteNome,
+            String solicitanteEmail,
+            String descricao,
+            String tag,
+            String complexidade,
+            LocalDate dataCard
+    ) {
         String tagHeader = (tag != null && !tag.isBlank()) ? String.format("[%s] ", tag.trim()) : "";
-        String cardName = String.format("[%s] %s- %s", protocolo, tagHeader, titulo);
-        String tagLine = (tag != null && !tag.isBlank()) ? String.format("- **Departamento / Tag:** %s\n", tag.trim()) : "";
+        String compHeader = (complexidade != null && !complexidade.isBlank()) ? String.format("[%s] ", complexidade.trim()) : "";
+        String cardName = String.format("[%s] %s%s- %s", protocolo, tagHeader, compHeader, titulo);
+
+        String tagLine = (tag != null && !tag.isBlank()) ? String.format("- **Departamento / Assunto:** %s\n", tag.trim()) : "";
+        String compLine = (complexidade != null && !complexidade.isBlank()) ? String.format("- **Complexidade:** %s\n", complexidade.trim()) : "";
+        String dataLine = (dataCard != null) ? String.format("- **Data do Chamado:** %s\n", dataCard.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))) : "";
+
+        String baseFrontend = (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl.replaceAll("/+$", "") : "https://flow.erickborba.dev.br";
+        String adminUrl = String.format("%s/?tab=admin&ticket=%s", baseFrontend, protocolo);
 
         String cardDesc = String.format(
                 "### Chamado %s\n\n" +
@@ -81,16 +106,23 @@ public class TrelloService {
                 "- **E-mail:** %s\n" +
                 "- **Protocolo:** `%s`\n" +
                 "%s" +
+                "%s" +
+                "%s" +
                 "- **Criado em:** %s\n\n" +
                 "---\n\n" +
-                "#### Descrição do Problema:\n%s\n",
+                "#### Descrição do Problema:\n%s\n\n" +
+                "---\n\n" +
+                "💬 **[Clique para Atender Chamado no Painel Admin e Conversar com Cliente](%s)**\n",
                 protocolo,
                 solicitanteNome,
                 solicitanteEmail,
                 protocolo,
                 tagLine,
+                compLine,
+                dataLine,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
-                descricao
+                descricao,
+                adminUrl
         );
 
         if (!isConfigured()) {
@@ -110,6 +142,15 @@ public class TrelloService {
             body.add("desc", cardDesc);
             body.add("pos", "top");
 
+            if (dataCard != null) {
+                try {
+                    String dueIso = dataCard.atTime(18, 0).atZone(ZoneId.of("America/Sao_Paulo")).toInstant().toString();
+                    body.add("due", dueIso);
+                } catch (Exception ex) {
+                    log.warn("Falha ao formatar data do card para ISO: {}", ex.getMessage());
+                }
+            }
+
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
 
@@ -119,9 +160,18 @@ public class TrelloService {
                 String shortUrl = (String) bodyMap.get("shortUrl");
                 String cardUrl = shortUrl != null ? shortUrl : ("https://trello.com/c/" + cardId);
 
+                // 1. Etiqueta de Assunto/Tag
                 if (tag != null && !tag.isBlank()) {
-                    attachTagLabelToCard(cardId, tag.trim());
+                    attachTagLabelToCard(cardId, tag.trim(), getLabelColorForTag(tag));
                 }
+
+                // 2. Etiqueta de Complexidade (verde = baixo, amarelo = médio, vermelho = moderado)
+                if (complexidade != null && !complexidade.isBlank()) {
+                    attachTagLabelToCard(cardId, complexidade.trim(), getComplexityColor(complexidade));
+                }
+
+                // 3. Anexo direto para o painel admin
+                attachAdminUrlToCard(cardId, adminUrl);
 
                 return new TrelloCardResult(cardId, listCriadoId, cardUrl);
             }
@@ -133,20 +183,49 @@ public class TrelloService {
         return new TrelloCardResult(fallbackId, listCriadoId, "https://trello.com/c/" + fallbackId);
     }
 
-    private void attachTagLabelToCard(String cardId, String tag) {
+    private void attachTagLabelToCard(String cardId, String labelName, String color) {
         try {
-            String color = getLabelColorForTag(tag);
             String labelUrl = String.format(
                     "%s/cards/%s/labels?key=%s&token=%s&name=%s&color=%s",
                     TRELLO_API_BASE, cardId, apiKey, token,
-                    java.net.URLEncoder.encode(tag, java.nio.charset.StandardCharsets.UTF_8),
+                    java.net.URLEncoder.encode(labelName, java.nio.charset.StandardCharsets.UTF_8),
                     color
             );
             restTemplate.postForEntity(labelUrl, null, Map.class);
         } catch (Exception ex) {
-            log.warn("Não foi possível anexar etiqueta de tag [{}] no Trello: {}", tag, ex.getMessage());
+            log.warn("Não foi possível anexar etiqueta [{}] ({}) no Trello: {}", labelName, color, ex.getMessage());
         }
     }
+
+    private void attachAdminUrlToCard(String cardId, String adminUrl) {
+        try {
+            String attachUrl = String.format(
+                    "%s/cards/%s/attachments?key=%s&token=%s&url=%s&name=%s",
+                    TRELLO_API_BASE, cardId, apiKey, token,
+                    java.net.URLEncoder.encode(adminUrl, java.nio.charset.StandardCharsets.UTF_8),
+                    java.net.URLEncoder.encode("Atender Chamado no Painel Admin", java.nio.charset.StandardCharsets.UTF_8)
+            );
+            restTemplate.postForEntity(attachUrl, null, Map.class);
+        } catch (Exception ex) {
+            log.warn("Não foi possível anexar link do Admin ao card {}: {}", cardId, ex.getMessage());
+        }
+    }
+
+    private String getComplexityColor(String complexidade) {
+        if (complexidade == null) return "green";
+        switch (complexidade.trim().toLowerCase()) {
+            case "baixo":
+                return "green";
+            case "médio":
+            case "medio":
+                return "yellow";
+            case "moderado":
+                return "red";
+            default:
+                return "yellow";
+        }
+    }
+
 
     private String getLabelColorForTag(String tag) {
         if (tag == null) return "blue";

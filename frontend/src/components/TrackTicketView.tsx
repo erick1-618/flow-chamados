@@ -2,8 +2,9 @@ import { useState } from 'react';
 import type { Ticket } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
-import { TagBadge } from './TagBadge';
+import { TagBadge, ComplexityBadge } from './TagBadge';
 import { IconSearch, IconSend, IconRefresh } from './Icons';
+
 
 interface TrackTicketViewProps {
   initialProtocolo?: string;
@@ -177,13 +178,15 @@ export const TrackTicketView = ({
               <div className="ticket-protocol-row">
                 <span className="protocol-chip">{ticketAtual.protocolo}</span>
                 {ticketAtual.tag && <TagBadge tag={ticketAtual.tag} size="sm" />}
+                {ticketAtual.complexidade && <ComplexityBadge complexidade={ticketAtual.complexidade} size="sm" />}
                 <StatusBadge status={ticketAtual.status} size="sm" />
               </div>
               <h3 className="ticket-title-large">{ticketAtual.titulo}</h3>
               <p className="ticket-author-info">
-                {ticketAtual.solicitanteNome} • {new Date(ticketAtual.createdAt).toLocaleString('pt-BR')}
+                {ticketAtual.solicitanteNome} • {ticketAtual.dataCard ? `Data do card: ${new Date(ticketAtual.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}` : `Aberto em ${new Date(ticketAtual.createdAt).toLocaleString('pt-BR')}`}
               </p>
             </div>
+
 
             <button
               type="button"

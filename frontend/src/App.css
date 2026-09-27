@@ -1456,3 +1456,137 @@ body {
   color: var(--text-muted);
 }
 
+/* =====================================================================
+   COMPLEXIDADE (BAIXO, MÉDIO, MODERADO) & DATA DO CARD
+   ===================================================================== */
+.complexity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.complexity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background-color: var(--text-muted);
+  transition: background-color 0.15s;
+}
+
+.complexity-baixo .complexity-dot {
+  background-color: #10b981;
+}
+
+.complexity-baixo:hover,
+.complexity-baixo.active {
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #34d399;
+  font-weight: 600;
+}
+
+.complexity-medio .complexity-dot {
+  background-color: #f59e0b;
+}
+
+.complexity-medio:hover,
+.complexity-medio.active {
+  background-color: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.complexity-moderado .complexity-dot {
+  background-color: #ef4444;
+}
+
+.complexity-moderado:hover,
+.complexity-moderado.active {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #f87171;
+  font-weight: 600;
+}
+
+/* Badges de Complexidade */
+.complexity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.complexity-badge-sm {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.68rem;
+}
+
+.complexity-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.complexity-tag-baixo {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #10b981;
+}
+.complexity-tag-baixo .complexity-badge-dot {
+  background-color: #10b981;
+}
+
+.complexity-tag-medio {
+  background-color: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+}
+.complexity-tag-medio .complexity-badge-dot {
+  background-color: #f59e0b;
+}
+
+.complexity-tag-moderado {
+  background-color: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+}
+.complexity-tag-moderado .complexity-badge-dot {
+  background-color: #ef4444;
+}
+
+.table-ticket-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.table-date-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: var(--brand-accent);
+  background-color: rgba(37, 99, 235, 0.1);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  margin-top: 0.2rem;
+}
+
+

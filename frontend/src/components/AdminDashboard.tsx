@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CreateTicketInput, Ticket, TicketStatus } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
+import { TagBadge, ComplexityBadge } from './TagBadge';
 import {
   IconClose,
   IconExternalLink,
@@ -23,6 +24,7 @@ interface AdminDashboardProps {
   onReloadTickets: () => void;
   loading: boolean;
   addToast: (text: string, type?: 'success' | 'error' | 'info') => void;
+  targetTicketProto?: string | null;
 }
 
 export const AdminDashboard = ({
@@ -34,7 +36,9 @@ export const AdminDashboard = ({
   onReloadTickets,
   loading,
   addToast,
+  targetTicketProto,
 }: AdminDashboardProps) => {
+
   const [filtroStatus, setFiltroStatus] = useState<TicketStatus | ''>('');
   const [filtroBusca, setFiltroBusca] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -94,6 +98,19 @@ export const AdminDashboard = ({
       setLoadingDetail(false);
     }
   };
+
+  // Auto-selecionar chamado vindo do link direto do Trello
+  useEffect(() => {
+    if (targetTicketProto && tickets.length > 0 && !selectedTicket) {
+      const match = tickets.find(
+        (t) => t.protocolo.toLowerCase() === targetTicketProto.trim().toLowerCase()
+      );
+      if (match) {
+        handleOpenDetail(match);
+      }
+    }
+  }, [targetTicketProto, tickets]);
+
 
   // Enviar resposta administrativa
   const handleSendAdminReply = async (e: React.FormEvent) => {
@@ -198,11 +215,20 @@ export const AdminDashboard = ({
             </p>
           </div>
 
+          {targetTicketProto && (
+            <div className="alert alert-info" role="alert" style={{ marginBottom: '1rem' }}>
+              <span>
+                Chamado <strong>{targetTicketProto}</strong> acessado via Trello. Autentique-se para abrir a conversa diretamente.
+              </span>
+            </div>
+          )}
+
           {authError && (
             <div className="alert alert-error" role="alert">
               <span>{authError}</span>
             </div>
           )}
+
 
           <form onSubmit={handleLogin} className="form-corp">
             <div className="form-field">
@@ -346,6 +372,10 @@ export const AdminDashboard = ({
                       <div className="table-ticket-title" title={t.titulo}>
                         {t.titulo}
                       </div>
+                      <div className="table-ticket-tags">
+                        {t.tag && <TagBadge tag={t.tag} size="sm" />}
+                        {t.complexidade && <ComplexityBadge complexidade={t.complexidade} size="sm" />}
+                      </div>
                     </td>
                     <td>
                       <div className="table-user-name">{t.solicitanteNome}</div>
@@ -355,11 +385,12 @@ export const AdminDashboard = ({
                       <StatusBadge status={t.status} size="sm" />
                     </td>
                     <td className="table-date">
-                      {new Date(t.createdAt).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
+                      <div>
+                        {t.dataCard
+                          ? new Date(t.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')
+                          : new Date(t.createdAt).toLocaleDateString('pt-BR')}
+                      </div>
+                      {t.dataCard && <span className="table-date-badge">Card</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className="table-actions-group">
@@ -410,6 +441,8 @@ export const AdminDashboard = ({
                 <div className="ticket-protocol-row">
                   <span className="protocol-chip">{selectedTicket.protocolo}</span>
                   <StatusBadge status={selectedTicket.status} />
+                  {selectedTicket.tag && <TagBadge tag={selectedTicket.tag} size="sm" />}
+                  {selectedTicket.complexidade && <ComplexityBadge complexidade={selectedTicket.complexidade} size="sm" />}
                   {selectedTicket.trelloCardUrl && (
                     <a
                       href={selectedTicket.trelloCardUrl}
@@ -425,10 +458,10 @@ export const AdminDashboard = ({
                 </div>
                 <h3 className="modal-title">{selectedTicket.titulo}</h3>
                 <span className="modal-subtitle">
-                  Solicitante: <strong>{selectedTicket.solicitanteNome}</strong> ({selectedTicket.solicitanteEmail}) • Aberto em{' '}
-                  {new Date(selectedTicket.createdAt).toLocaleString('pt-BR')}
+                  Solicitante: <strong>{selectedTicket.solicitanteNome}</strong> ({selectedTicket.solicitanteEmail}) • {selectedTicket.dataCard ? `Data do card: ${new Date(selectedTicket.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}` : `Aberto em ${new Date(selectedTicket.createdAt).toLocaleString('pt-BR')}`}
                 </span>
               </div>
+
               <button
                 type="button"
                 className="btn-icon"

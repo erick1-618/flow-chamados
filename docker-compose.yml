@@ -51,7 +51,9 @@ services:
       TRELLO_LIST_EXCLUIDO: ${TRELLO_LIST_EXCLUIDO:-6ab952308e7442f8e2e36533}
       
       ADMIN_API_KEY: ${ADMIN_API_KEY:-flow-admin-secret-2026}
+      FRONTEND_URL: ${FRONTEND_URL:-https://flow.erickborba.dev.br}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,https://*.vercel.app,https://flow.erickborba.dev.br}
+
     ports:
       - "127.0.0.1:8080:8080"
     networks:

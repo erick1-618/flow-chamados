@@ -12,12 +12,22 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'abrir' | 'acompanhar' | 'admin'>('abrir');
   const [backendHealth, setBackendHealth] = useState<HealthCheckResponse | null>(null);
 
+  // Parâmetros de link direto (ex: link do card no Trello para atender no Admin)
+  const [targetTicketProto, setTargetTicketProto] = useState<string | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('ticket');
+    } catch {
+      return null;
+    }
+  });
+
   // Estado compartilhado para rastreamento
   const [trackProtocolo, setTrackProtocolo] = useState('');
   const [trackEmail, setTrackEmail] = useState('');
   const [ticketAtual, setTicketAtual] = useState<Ticket | null>(null);
 
-  // Estado do Admin (campo inicia vazio por segurança)
+  // Estado do Admin
   const [adminKey, setAdminKey] = useState<string>(
     () => sessionStorage.getItem('flow_admin_key') || ''
   );
@@ -37,12 +47,37 @@ export function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Checar saúde da API ao inicializar
+  // Checar saúde da API e detectar parâmetros na URL
   useEffect(() => {
     api.getHealth()
       .then(setBackendHealth)
       .catch(() => setBackendHealth(null));
+
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    const ticketParam = params.get('ticket');
+
+    if (ticketParam) {
+      setTargetTicketProto(ticketParam);
+      setActiveTab('admin');
+    } else if (tabParam === 'admin' || tabParam === 'acompanhar' || tabParam === 'abrir') {
+      setActiveTab(tabParam);
+    }
+
+    // Se já havia chave na sessão, autentica e carrega chamados
+    const savedKey = sessionStorage.getItem('flow_admin_key');
+    if (savedKey) {
+      api.listAdminTickets(savedKey)
+        .then((list) => {
+          setIsAdminAuth(true);
+          setAdminTickets(list);
+        })
+        .catch(() => {
+          sessionStorage.removeItem('flow_admin_key');
+        });
+    }
   }, []);
+
 
   // Carregar chamados administrativos
   const handleReloadAdminTickets = async () => {
@@ -114,8 +149,10 @@ export function App() {
             onReloadTickets={handleReloadAdminTickets}
             loading={loadingAdmin}
             addToast={addToast}
+            targetTicketProto={targetTicketProto}
           />
         )}
+
       </main>
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />

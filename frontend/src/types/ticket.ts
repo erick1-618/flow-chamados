@@ -18,6 +18,8 @@ export interface Ticket {
   solicitanteEmail: string;
   status: TicketStatus;
   tag?: string;
+  complexidade?: string;
+  dataCard?: string;
   trelloCardId?: string;
   trelloListId?: string;
   trelloCardUrl?: string;
@@ -32,7 +34,10 @@ export interface CreateTicketInput {
   titulo: string;
   descricao: string;
   tag?: string;
+  complexidade?: string;
+  dataCard?: string;
 }
+
 
 
 export interface TrackTicketInput {

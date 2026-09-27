@@ -3,6 +3,7 @@ package com.flow.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 
 public class CreateTicketRequest {
 
@@ -25,6 +26,11 @@ public class CreateTicketRequest {
     @Size(max = 50, message = "A tag deve ter no máximo 50 caracteres")
     private String tag;
 
+    @Size(max = 30, message = "A complexidade deve ter no máximo 30 caracteres")
+    private String complexidade;
+
+    private LocalDate dataCard;
+
     public CreateTicketRequest() {
     }
 
@@ -42,6 +48,7 @@ public class CreateTicketRequest {
         this.descricao = descricao;
         this.tag = tag;
     }
+
 
     public String getNome() {
         return nome;
@@ -82,5 +89,22 @@ public class CreateTicketRequest {
     public void setTag(String tag) {
         this.tag = tag;
     }
+
+    public String getComplexidade() {
+        return complexidade;
+    }
+
+    public void setComplexidade(String complexidade) {
+        this.complexidade = complexidade;
+    }
+
+    public LocalDate getDataCard() {
+        return dataCard;
+    }
+
+    public void setDataCard(LocalDate dataCard) {
+        this.dataCard = dataCard;
+    }
 }
+
 

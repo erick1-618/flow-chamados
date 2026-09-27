@@ -5,6 +5,7 @@ import com.flow.model.TicketStatus;
 
 import org.hibernate.Hibernate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,8 @@ public class TicketResponse {
     private String solicitanteEmail;
     private TicketStatus status;
     private String tag;
+    private String complexidade;
+    private LocalDate dataCard;
     private String trelloCardId;
     private String trelloListId;
     private String trelloCardUrl;
@@ -38,6 +41,8 @@ public class TicketResponse {
         this.solicitanteEmail = ticket.getSolicitanteEmail();
         this.status = ticket.getStatus();
         this.tag = ticket.getTag();
+        this.complexidade = ticket.getComplexidade();
+        this.dataCard = ticket.getDataCard();
         this.trelloCardId = ticket.getTrelloCardId();
         this.trelloListId = ticket.getTrelloListId();
         this.trelloCardUrl = ticket.getTrelloCardUrl();
@@ -49,6 +54,7 @@ public class TicketResponse {
                     .collect(Collectors.toList());
         }
     }
+
 
 
     public Long getId() {
@@ -162,5 +168,22 @@ public class TicketResponse {
     public void setTag(String tag) {
         this.tag = tag;
     }
+
+    public String getComplexidade() {
+        return complexidade;
+    }
+
+    public void setComplexidade(String complexidade) {
+        this.complexidade = complexidade;
+    }
+
+    public LocalDate getDataCard() {
+        return dataCard;
+    }
+
+    public void setDataCard(LocalDate dataCard) {
+        this.dataCard = dataCard;
+    }
 }
+
 

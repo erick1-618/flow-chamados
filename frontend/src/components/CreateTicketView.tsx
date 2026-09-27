@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { CreateTicketInput, Ticket } from '../types/ticket';
 import { api } from '../services/api';
 import { IconCheck, IconCopy, IconSend } from './Icons';
-import { CORPORATE_TAGS, TagBadge } from './TagBadge';
+import { CORPORATE_TAGS, TagBadge, COMPLEXITY_OPTIONS, ComplexityBadge } from './TagBadge';
 
 interface CreateTicketViewProps {
   onTicketCreated: (ticket: Ticket) => void;
@@ -20,6 +20,11 @@ export const CreateTicketView = ({
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('TI & Sistemas');
+  const [selectedComplexidade, setSelectedComplexidade] = useState<string>('Baixo');
+  const [dataCard, setDataCard] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ticketRecente, setTicketRecente] = useState<Ticket | null>(null);
@@ -48,7 +53,10 @@ export const CreateTicketView = ({
         titulo: tituloTrim,
         descricao: descTrim,
         tag: selectedTag,
+        complexidade: selectedComplexidade,
+        dataCard: dataCard || undefined,
       };
+
 
       const result = await api.createTicket(input);
       setTicketRecente(result);
@@ -90,8 +98,9 @@ export const CreateTicketView = ({
           </p>
 
           <div className="protocol-voucher">
-            <div className="voucher-tag-pill">
+            <div className="voucher-tag-pill" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <TagBadge tag={ticketRecente.tag || selectedTag} />
+              <ComplexityBadge complexidade={ticketRecente.complexidade || selectedComplexidade} />
             </div>
             <span className="voucher-label">PROTOCOLO</span>
             <div className="voucher-code-wrapper">
@@ -105,6 +114,11 @@ export const CreateTicketView = ({
                 {copiado ? <IconCheck size={16} /> : <IconCopy size={16} />}
               </button>
             </div>
+            {ticketRecente.dataCard && (
+              <span className="voucher-hint" style={{ fontWeight: 600 }}>
+                Data do card: {new Date(ticketRecente.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}
+              </span>
+            )}
             <span className="voucher-hint">
               Guarde este protocolo e seu e-mail ({ticketRecente.solicitanteEmail}) para consultar atualizações.
             </span>
@@ -147,7 +161,7 @@ export const CreateTicketView = ({
           <form onSubmit={handleSubmit} className="form-corp">
             {/* Seletor de Categoria em Pills Minimalistas */}
             <div className="form-field">
-              <label>Departamento / Categoria</label>
+              <label>Departamento / Assunto</label>
               <div className="tag-pills-row">
                 {CORPORATE_TAGS.map((t) => {
                   const isSelected = selectedTag === t.name;
@@ -165,6 +179,41 @@ export const CreateTicketView = ({
                 })}
               </div>
             </div>
+
+            {/* Seletor de Complexidade (Baixo, Médio, Moderado) e Data do Card */}
+            <div className="form-row-2">
+              <div className="form-field">
+                <label>Complexidade do Chamado</label>
+                <div className="tag-pills-row">
+                  {COMPLEXITY_OPTIONS.map((c) => {
+                    const isSelected = selectedComplexidade === c.label;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`complexity-pill complexity-${c.id} ${isSelected ? 'active' : ''}`}
+                        onClick={() => setSelectedComplexidade(c.label)}
+                      >
+                        <span className="complexity-dot" />
+                        <span>{c.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="input-data-card">Data do Chamado</label>
+                <input
+                  id="input-data-card"
+                  type="date"
+                  required
+                  value={dataCard}
+                  onChange={(e) => setDataCard(e.target.value)}
+                />
+              </div>
+            </div>
+
 
             <div className="form-row-2">
               <div className="form-field">
