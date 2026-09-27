@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { CreateTicketInput, Ticket, TicketStatus } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
-import { TagBadge, ComplexityBadge } from './TagBadge';
+import { TagBadge, ComplexityBadge, CORPORATE_TAGS } from './TagBadge';
 import {
   IconClose,
   IconExternalLink,
@@ -40,6 +40,9 @@ export const AdminDashboard = ({
 }: AdminDashboardProps) => {
 
   const [filtroStatus, setFiltroStatus] = useState<TicketStatus | ''>('');
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('');
+  const [filtroComplexidade, setFiltroComplexidade] = useState<string>('');
+  const [ordenacao, setOrdenacao] = useState<'recentes' | 'conclusao_asc' | 'conclusao_desc' | 'complexidade_desc' | 'complexidade_asc'>('recentes');
   const [filtroBusca, setFiltroBusca] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -53,6 +56,9 @@ export const AdminDashboard = ({
   const [manualEmail, setManualEmail] = useState('');
   const [manualTitulo, setManualTitulo] = useState('');
   const [manualDescricao, setManualDescricao] = useState('');
+  const [manualTag, setManualTag] = useState<string>('suporte-ti');
+  const [manualComplexidade, setManualComplexidade] = useState<string>('Baixo');
+  const [manualDataCard, setManualDataCard] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [salvandoManual, setSalvandoManual] = useState(false);
 
   // Autenticação simples com a chave corporativa
@@ -144,6 +150,9 @@ export const AdminDashboard = ({
         email: manualEmail.trim(),
         titulo: manualTitulo.trim(),
         descricao: manualDescricao.trim(),
+        tag: manualTag,
+        complexidade: manualComplexidade,
+        dataCard: manualDataCard || undefined,
       };
       const created = await api.createAdminTicket(adminKey, input);
       setShowManualModal(false);
@@ -151,6 +160,8 @@ export const AdminDashboard = ({
       setManualEmail('');
       setManualTitulo('');
       setManualDescricao('');
+      setManualTag('suporte-ti');
+      setManualComplexidade('Baixo');
       addToast(`Chamado manual ${created.protocolo} criado e sincronizado no Trello!`, 'success');
       onReloadTickets();
     } catch (err: unknown) {
@@ -181,19 +192,65 @@ export const AdminDashboard = ({
     }
   };
 
-  // Filtragem em memória no client-side para busca instantânea
-  const ticketsFiltrados = tickets.filter((t) => {
-    if (filtroStatus && t.status !== filtroStatus) return false;
-    if (filtroBusca.trim()) {
-      const q = filtroBusca.toLowerCase();
-      const matchProto = t.protocolo.toLowerCase().includes(q);
-      const matchTitulo = t.titulo.toLowerCase().includes(q);
-      const matchNome = t.solicitanteNome.toLowerCase().includes(q);
-      const matchEmail = t.solicitanteEmail.toLowerCase().includes(q);
-      return matchProto || matchTitulo || matchNome || matchEmail;
-    }
-    return true;
-  });
+  const getComplexityWeight = (comp?: string): number => {
+    if (!comp) return 0;
+    const lower = comp.toLowerCase();
+    if (lower.includes('moderado')) return 3;
+    if (lower.includes('médio') || lower.includes('medio')) return 2;
+    if (lower.includes('baixo')) return 1;
+    return 0;
+  };
+
+  const categoriasDisponiveis = Array.from(
+    new Set([
+      ...CORPORATE_TAGS.map((t) => t.name),
+      ...tickets.map((t) => t.tag).filter(Boolean) as string[],
+    ])
+  );
+
+  // Filtragem e ordenação no client-side
+  const ticketsFiltrados = tickets
+    .filter((t) => {
+      if (filtroStatus && t.status !== filtroStatus) return false;
+      if (filtroCategoria && t.tag?.toLowerCase() !== filtroCategoria.toLowerCase()) return false;
+      if (filtroComplexidade && t.complexidade?.toLowerCase() !== filtroComplexidade.toLowerCase()) return false;
+      if (filtroBusca.trim()) {
+        const q = filtroBusca.toLowerCase().trim();
+        const matchProto = t.protocolo.toLowerCase().includes(q);
+        const matchTitulo = t.titulo.toLowerCase().includes(q);
+        const matchNome = t.solicitanteNome.toLowerCase().includes(q);
+        const matchEmail = t.solicitanteEmail.toLowerCase().includes(q);
+        const matchTag = t.tag?.toLowerCase().includes(q);
+        return matchProto || matchTitulo || matchNome || matchEmail || matchTag;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (ordenacao === 'conclusao_asc') {
+        if (!a.dataCard && !b.dataCard) return 0;
+        if (!a.dataCard) return 1;
+        if (!b.dataCard) return -1;
+        return a.dataCard.localeCompare(b.dataCard);
+      }
+      if (ordenacao === 'conclusao_desc') {
+        if (!a.dataCard && !b.dataCard) return 0;
+        if (!a.dataCard) return 1;
+        if (!b.dataCard) return -1;
+        return b.dataCard.localeCompare(a.dataCard);
+      }
+      if (ordenacao === 'complexidade_desc') {
+        const diff = getComplexityWeight(b.complexidade) - getComplexityWeight(a.complexidade);
+        if (diff !== 0) return diff;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      if (ordenacao === 'complexidade_asc') {
+        const diff = getComplexityWeight(a.complexidade) - getComplexityWeight(b.complexidade);
+        if (diff !== 0) return diff;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      // Padrão: mais recentes primeiro
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   const countTotal = tickets.length;
   const countCriado = tickets.filter((t) => t.status === 'CRIADO').length;
@@ -209,7 +266,7 @@ export const AdminDashboard = ({
             <div className="card-header-icon mx-auto">
               <IconShield size={24} />
             </div>
-            <h2 className="card-title">Acesso Restrito da Equipe</h2>
+            <h2 className="card-title">Acesso Restrito</h2>
             <p className="card-subtitle">
               Insira a chave de segurança administrativa para gerenciar a fila de suporte técnico.
             </p>
@@ -232,7 +289,7 @@ export const AdminDashboard = ({
 
           <form onSubmit={handleLogin} className="form-corp">
             <div className="form-field">
-              <label htmlFor="admin-key-input">Chave de Acesso (X-Admin-Key)</label>
+              <label htmlFor="admin-key-input">Chave de Acesso</label>
               <input
                 id="admin-key-input"
                 type="password"
@@ -296,6 +353,7 @@ export const AdminDashboard = ({
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value as TicketStatus | '')}
             className="select-status"
+            title="Filtrar por Status"
           >
             <option value="">Todos os Status</option>
             <option value="CRIADO">Criado</option>
@@ -303,6 +361,71 @@ export const AdminDashboard = ({
             <option value="AGUARDANDO_ACAO">Aguardando Ação</option>
             <option value="FINALIZADO">Finalizado</option>
           </select>
+
+          <select
+            value={filtroCategoria}
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+            className="select-status"
+            title="Filtrar por Categoria / Classe"
+          >
+            <option value="">Todas as Categorias</option>
+            {categoriasDisponiveis.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={ordenacao}
+            onChange={(e) =>
+              setOrdenacao(
+                e.target.value as
+                  | 'recentes'
+                  | 'conclusao_asc'
+                  | 'conclusao_desc'
+                  | 'complexidade_desc'
+                  | 'complexidade_asc'
+              )
+            }
+            className="select-status"
+            title="Ordenar registros"
+          >
+            <option value="recentes">Mais recentes</option>
+            <option value="conclusao_asc">Conclusão requerida (Mais próxima)</option>
+            <option value="conclusao_desc">Conclusão requerida (Mais distante)</option>
+            <option value="complexidade_desc">Ordem de Complexidade (Moderado ➔ Baixo)</option>
+            <option value="complexidade_asc">Ordem de Complexidade (Baixo ➔ Moderado)</option>
+          </select>
+
+          <select
+            value={filtroComplexidade}
+            onChange={(e) => setFiltroComplexidade(e.target.value)}
+            className="select-status"
+            title="Filtrar por Complexidade"
+          >
+            <option value="">Todas as Complexidades</option>
+            <option value="Baixo">Baixo</option>
+            <option value="Médio">Médio</option>
+            <option value="Moderado">Moderado</option>
+          </select>
+
+          {(filtroStatus || filtroCategoria || filtroComplexidade || filtroBusca || ordenacao !== 'recentes') && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-xs"
+              onClick={() => {
+                setFiltroStatus('');
+                setFiltroCategoria('');
+                setFiltroComplexidade('');
+                setFiltroBusca('');
+                setOrdenacao('recentes');
+              }}
+              title="Limpar todos os filtros"
+            >
+              <span>Limpar filtros</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -345,7 +468,7 @@ export const AdminDashboard = ({
                 <th>Assunto do Chamado</th>
                 <th style={{ width: 220 }}>Solicitante</th>
                 <th style={{ width: 160 }}>Status (Trello)</th>
-                <th style={{ width: 130 }}>Data Abertura</th>
+                <th style={{ width: 150 }}>Data de Entrega</th>
                 <th style={{ width: 190, textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
@@ -385,12 +508,15 @@ export const AdminDashboard = ({
                       <StatusBadge status={t.status} size="sm" />
                     </td>
                     <td className="table-date">
-                      <div>
-                        {t.dataCard
-                          ? new Date(t.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')
-                          : new Date(t.createdAt).toLocaleDateString('pt-BR')}
-                      </div>
-                      {t.dataCard && <span className="table-date-badge">Card</span>}
+                      {t.dataCard ? (
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {new Date(t.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Sem prazo
+                        </span>
+                      )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className="table-actions-group">
@@ -458,7 +584,10 @@ export const AdminDashboard = ({
                 </div>
                 <h3 className="modal-title">{selectedTicket.titulo}</h3>
                 <span className="modal-subtitle">
-                  Solicitante: <strong>{selectedTicket.solicitanteNome}</strong> ({selectedTicket.solicitanteEmail}) • {selectedTicket.dataCard ? `Data do card: ${new Date(selectedTicket.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}` : `Aberto em ${new Date(selectedTicket.createdAt).toLocaleString('pt-BR')}`}
+                  Solicitante: <strong>{selectedTicket.solicitanteNome}</strong> ({selectedTicket.solicitanteEmail})
+                  {selectedTicket.dataCard && (
+                    <> • Data de Entrega: <strong>{new Date(selectedTicket.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}</strong></>
+                  )}
                 </span>
               </div>
 
@@ -619,6 +748,48 @@ export const AdminDashboard = ({
                   placeholder="Instruções ou informações do chamado"
                   value={manualDescricao}
                   onChange={(e) => setManualDescricao(e.target.value)}
+                />
+              </div>
+
+              <div className="form-row-2">
+                <div className="form-field">
+                  <label>Classe / Categoria</label>
+                  <select
+                    value={manualTag}
+                    onChange={(e) => setManualTag(e.target.value)}
+                    className="select-status"
+                    style={{ width: '100%', height: '38px' }}
+                  >
+                    {CORPORATE_TAGS.map((t) => (
+                      <option key={t.id} value={t.name}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-field">
+                  <label>Complexidade</label>
+                  <select
+                    value={manualComplexidade}
+                    onChange={(e) => setManualComplexidade(e.target.value)}
+                    className="select-status"
+                    style={{ width: '100%', height: '38px' }}
+                  >
+                    <option value="Baixo">Baixo</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Moderado">Moderado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label>Data de Entrega <span className="req">*</span></label>
+                <input
+                  type="date"
+                  required
+                  value={manualDataCard}
+                  onChange={(e) => setManualDataCard(e.target.value)}
                 />
               </div>
 

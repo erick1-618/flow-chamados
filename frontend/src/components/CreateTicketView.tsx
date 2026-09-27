@@ -151,7 +151,7 @@ export const CreateTicketView = ({
             </div>
             {ticketRecente.dataCard && (
               <span className="voucher-hint" style={{ fontWeight: 600 }}>
-                Data do card: {new Date(ticketRecente.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}
+                Data de entrega: {new Date(ticketRecente.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}
               </span>
             )}
             <span className="voucher-hint">
@@ -237,7 +237,7 @@ export const CreateTicketView = ({
               </div>
 
               <div className="form-field">
-                <label htmlFor="input-data-card">Data do Chamado <span className="req">*</span></label>
+                <label htmlFor="input-data-card">Data de Entrega <span className="req">*</span></label>
                 <input
                   id="input-data-card"
                   type="date"
