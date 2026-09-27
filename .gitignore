@@ -1,0 +1,72 @@
+# =====================================================================
+# ENVIRONMENTS & SECRETS (NUNCA VERSIONAR)
+# =====================================================================
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# Chaves SSH, Certificados e Tokens
+*.pem
+*.key
+*.pub
+id_rsa*
+*.cert
+*.crt
+
+# =====================================================================
+# IDEs & EDITORS
+# =====================================================================
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# =====================================================================
+# BACKEND (Java & Maven)
+# =====================================================================
+**/target/
+**/bin/
+*.class
+*.jar
+*.war
+*.ear
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# =====================================================================
+# FRONTEND (Node, Vite & Build)
+# =====================================================================
+**/node_modules/
+**/dist/
+**/dist-ssr/
+frontend/.oxlint_cache/
+*.tsbuildinfo
+.eslintcache
+
+# =====================================================================
+# DOCKER & DATABASE
+# =====================================================================
+postgres_data/
+**/postgres_data/
+*.sql.gz
+*.dump
+
+# =====================================================================
+# LOGS & OS TEMPORARIES
+# =====================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.DS_Store
+Thumbs.db
+desktop.ini
