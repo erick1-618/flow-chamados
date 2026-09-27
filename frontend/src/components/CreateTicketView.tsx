@@ -19,7 +19,7 @@ export const CreateTicketView = ({
   const [email, setEmail] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string>('TI & Sistemas');
+  const [selectedTag, setSelectedTag] = useState<string>('academico');
   const [selectedComplexidade, setSelectedComplexidade] = useState<string>('Baixo');
   const [dataCard, setDataCard] = useState<string>(() => {
     const today = new Date();
@@ -39,12 +39,47 @@ export const CreateTicketView = ({
     const tituloTrim = titulo.trim();
     const descTrim = descricao.trim();
 
-    if (!nomeTrim || !emailTrim || !tituloTrim || !descTrim) {
-      setErro('Preencha todos os campos obrigatórios.');
+    // Validações no frontend
+    if (!nomeTrim) {
+      setErro('O nome do solicitante é obrigatório.');
+      return;
+    }
+    if (nomeTrim.length < 2) {
+      setErro('O nome deve conter pelo menos 2 caracteres.');
+      return;
+    }
+    if (!emailTrim) {
+      setErro('O e-mail é obrigatório.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailTrim)) {
+      setErro('Informe um endereço de e-mail válido (ex: seu.email@empresa.com).');
+      return;
+    }
+    if (!tituloTrim) {
+      setErro('O assunto do chamado é obrigatório.');
+      return;
+    }
+    if (tituloTrim.length < 3) {
+      setErro('O assunto deve conter pelo menos 3 caracteres.');
+      return;
+    }
+    if (!descTrim) {
+      setErro('A descrição do chamado é obrigatória.');
+      return;
+    }
+    if (descTrim.length < 10) {
+      setErro(`A descrição deve conter no mínimo 10 caracteres (atualmente com ${descTrim.length}).`);
+      return;
+    }
+    if (!dataCard) {
+      setErro('A data do chamado é obrigatória.');
       return;
     }
 
     setLoading(true);
+
 
     try {
       const input: CreateTicketInput = {
@@ -159,9 +194,9 @@ export const CreateTicketView = ({
           )}
 
           <form onSubmit={handleSubmit} className="form-corp">
-            {/* Seletor de Categoria em Pills Minimalistas */}
+            {/* Seletor de Classe / Tag sem emojis */}
             <div className="form-field">
-              <label>Departamento / Assunto</label>
+              <label>Classe do Chamado</label>
               <div className="tag-pills-row">
                 {CORPORATE_TAGS.map((t) => {
                   const isSelected = selectedTag === t.name;
@@ -172,7 +207,6 @@ export const CreateTicketView = ({
                       className={`tag-filter-pill ${isSelected ? 'active' : ''}`}
                       onClick={() => setSelectedTag(t.name)}
                     >
-                      <span>{t.icon}</span>
                       <span>{t.name}</span>
                     </button>
                   );
@@ -203,7 +237,7 @@ export const CreateTicketView = ({
               </div>
 
               <div className="form-field">
-                <label htmlFor="input-data-card">Data do Chamado</label>
+                <label htmlFor="input-data-card">Data do Chamado <span className="req">*</span></label>
                 <input
                   id="input-data-card"
                   type="date"
@@ -217,58 +251,63 @@ export const CreateTicketView = ({
 
             <div className="form-row-2">
               <div className="form-field">
-                <label htmlFor="input-nome">Seu Nome</label>
+                <label htmlFor="input-nome">Seu Nome <span className="req">*</span></label>
                 <input
                   id="input-nome"
                   type="text"
                   required
-                  placeholder="Nome completo"
+                  minLength={2}
+                  maxLength={100}
+                  placeholder="Nome completo (mínimo 2 caracteres)"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
-                  maxLength={100}
                 />
               </div>
 
               <div className="form-field">
-                <label htmlFor="input-email">Seu E-mail</label>
+                <label htmlFor="input-email">Seu E-mail <span className="req">*</span></label>
                 <input
                   id="input-email"
                   type="email"
                   required
+                  maxLength={150}
                   placeholder="seu.email@empresa.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  maxLength={150}
                 />
               </div>
             </div>
 
             <div className="form-field">
-              <label htmlFor="input-titulo">Assunto</label>
+              <label htmlFor="input-titulo">Assunto <span className="req">*</span></label>
               <input
                 id="input-titulo"
                 type="text"
                 required
-                placeholder="Ex: Falha ao emitir nota fiscal"
+                minLength={3}
+                maxLength={150}
+                placeholder="Resumo do problema (mínimo 3 caracteres)"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                maxLength={150}
               />
             </div>
 
             <div className="form-field">
               <div className="field-label-group">
-                <label htmlFor="input-descricao">Descrição</label>
-                <span className="char-count">{descricao.length}/2000</span>
+                <label htmlFor="input-descricao">Descrição <span className="req">*</span></label>
+                <span className={`char-count ${descricao.length > 0 && descricao.length < 10 ? 'char-count-warning' : ''}`}>
+                  {descricao.length}/2000 {descricao.length > 0 && descricao.length < 10 ? '(mínimo 10 caracteres)' : ''}
+                </span>
               </div>
               <textarea
                 id="input-descricao"
                 rows={4}
                 required
-                placeholder="Descreva o que está acontecendo e informações que possam ajudar a resolver..."
+                minLength={10}
+                maxLength={2000}
+                placeholder="Descreva o que está acontecendo com detalhes (mínimo 10 caracteres)..."
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                maxLength={2000}
               />
             </div>
 
@@ -282,6 +321,7 @@ export const CreateTicketView = ({
                 <span>{loading ? 'Enviando...' : 'Enviar Chamado'}</span>
               </button>
             </div>
+
           </form>
         </div>
       )}

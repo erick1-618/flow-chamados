@@ -89,16 +89,15 @@ public class TrelloService {
             String complexidade,
             LocalDate dataCard
     ) {
-        String tagHeader = (tag != null && !tag.isBlank()) ? String.format("[%s] ", tag.trim()) : "";
-        String compHeader = (complexidade != null && !complexidade.isBlank()) ? String.format("[%s] ", complexidade.trim()) : "";
-        String cardName = String.format("[%s] %s%s- %s", protocolo, tagHeader, compHeader, titulo);
+        String cardName = String.format("[%s] - %s", protocolo, titulo);
 
-        String tagLine = (tag != null && !tag.isBlank()) ? String.format("- **Departamento / Assunto:** %s\n", tag.trim()) : "";
+        String tagLine = (tag != null && !tag.isBlank()) ? String.format("- **Classe / Tag:** %s\n", tag.trim()) : "";
         String compLine = (complexidade != null && !complexidade.isBlank()) ? String.format("- **Complexidade:** %s\n", complexidade.trim()) : "";
         String dataLine = (dataCard != null) ? String.format("- **Data do Chamado:** %s\n", dataCard.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))) : "";
 
         String baseFrontend = (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl.replaceAll("/+$", "") : "https://flow.erickborba.dev.br";
         String adminUrl = String.format("%s/?tab=admin&ticket=%s", baseFrontend, protocolo);
+
 
         String cardDesc = String.format(
                 "### Chamado %s\n\n" +
@@ -184,28 +183,38 @@ public class TrelloService {
     }
 
     private void attachTagLabelToCard(String cardId, String labelName, String color) {
+        if (!isConfigured() || cardId == null || cardId.startsWith("mock_")) return;
         try {
-            String labelUrl = String.format(
-                    "%s/cards/%s/labels?key=%s&token=%s&name=%s&color=%s",
-                    TRELLO_API_BASE, cardId, apiKey, token,
-                    java.net.URLEncoder.encode(labelName, java.nio.charset.StandardCharsets.UTF_8),
-                    color
-            );
-            restTemplate.postForEntity(labelUrl, null, Map.class);
+            String url = String.format("%s/cards/%s/labels?key=%s&token=%s", TRELLO_API_BASE, cardId, apiKey, token);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("name", labelName);
+            body.add("color", color);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+            restTemplate.postForEntity(url, request, Map.class);
+            log.info("Label [{}] ({}) vinculada ao card {}", labelName, color, cardId);
         } catch (Exception ex) {
             log.warn("Não foi possível anexar etiqueta [{}] ({}) no Trello: {}", labelName, color, ex.getMessage());
         }
     }
 
     private void attachAdminUrlToCard(String cardId, String adminUrl) {
+        if (!isConfigured() || cardId == null || cardId.startsWith("mock_")) return;
         try {
-            String attachUrl = String.format(
-                    "%s/cards/%s/attachments?key=%s&token=%s&url=%s&name=%s",
-                    TRELLO_API_BASE, cardId, apiKey, token,
-                    java.net.URLEncoder.encode(adminUrl, java.nio.charset.StandardCharsets.UTF_8),
-                    java.net.URLEncoder.encode("Atender Chamado no Painel Admin", java.nio.charset.StandardCharsets.UTF_8)
-            );
-            restTemplate.postForEntity(attachUrl, null, Map.class);
+            String url = String.format("%s/cards/%s/attachments?key=%s&token=%s", TRELLO_API_BASE, cardId, apiKey, token);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("url", adminUrl);
+            body.add("name", "Atender Chamado no Painel Admin");
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+            restTemplate.postForEntity(url, request, Map.class);
+            log.info("Link de atendimento admin anexado ao card {}", cardId);
         } catch (Exception ex) {
             log.warn("Não foi possível anexar link do Admin ao card {}: {}", cardId, ex.getMessage());
         }
@@ -226,25 +235,24 @@ public class TrelloService {
         }
     }
 
-
     private String getLabelColorForTag(String tag) {
         if (tag == null) return "blue";
-        switch (tag.toLowerCase()) {
-            case "ti & sistemas":
-            case "ti":
-                return "blue";
-            case "infraestrutura":
-                return "orange";
-            case "acessos & contas":
+        switch (tag.trim().toLowerCase()) {
+            case "academico":
+            case "acadêmico":
                 return "purple";
-            case "financeiro":
+            case "pessoal":
                 return "green";
-            case "recursos humanos":
-                return "pink";
+            case "comunidade":
+                return "orange";
+            case "suporte-ti":
+            case "suporte ti":
+                return "blue";
             default:
                 return "sky";
         }
     }
+
 
 
     public boolean setupWebhook() {
