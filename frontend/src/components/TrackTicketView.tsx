@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Ticket } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
+import { TagBadge } from './TagBadge';
 import { IconSearch, IconSend, IconRefresh } from './Icons';
 
 interface TrackTicketViewProps {
@@ -196,6 +197,7 @@ export const TrackTicketView = ({
             <div>
               <div className="ticket-protocol-row">
                 <span className="protocol-chip">{ticketAtual.protocolo}</span>
+                {ticketAtual.tag && <TagBadge tag={ticketAtual.tag} />}
                 <StatusBadge status={ticketAtual.status} />
               </div>
               <h3 className="ticket-title-large">{ticketAtual.titulo}</h3>

@@ -1,8 +1,8 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -15,6 +15,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0b1120;
-  color: #f8fafc;
+  background-color: #f1f5f9;
+  color: #0f172a;
 }

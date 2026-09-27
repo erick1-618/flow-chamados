@@ -21,6 +21,7 @@ public class TicketResponse {
     private String trelloCardId;
     private String trelloListId;
     private String trelloCardUrl;
+    private String tag;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<MessageResponse> messages = new ArrayList<>();
@@ -39,6 +40,7 @@ public class TicketResponse {
         this.trelloCardId = ticket.getTrelloCardId();
         this.trelloListId = ticket.getTrelloListId();
         this.trelloCardUrl = ticket.getTrelloCardUrl();
+        this.tag = ticket.getTag();
         this.createdAt = ticket.getCreatedAt();
         this.updatedAt = ticket.getUpdatedAt();
         if (ticket.getMessages() != null && Hibernate.isInitialized(ticket.getMessages())) {
@@ -142,6 +144,14 @@ public class TicketResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public List<MessageResponse> getMessages() {

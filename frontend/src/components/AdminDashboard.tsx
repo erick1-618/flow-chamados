@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CreateTicketInput, Ticket, TicketStatus } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
+import { TagBadge, CORPORATE_TAGS } from './TagBadge';
 import {
   IconClose,
   IconExternalLink,
@@ -34,6 +35,7 @@ export const AdminDashboard = ({
   addToast,
 }: AdminDashboardProps) => {
   const [filtroStatus, setFiltroStatus] = useState<TicketStatus | ''>('');
+  const [filtroTag, setFiltroTag] = useState<string>('');
   const [filtroBusca, setFiltroBusca] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -47,6 +49,7 @@ export const AdminDashboard = ({
   const [manualEmail, setManualEmail] = useState('');
   const [manualTitulo, setManualTitulo] = useState('');
   const [manualDescricao, setManualDescricao] = useState('');
+  const [manualTag, setManualTag] = useState('TI & Sistemas');
   const [salvandoManual, setSalvandoManual] = useState(false);
 
   // Autenticação simples com a chave corporativa
@@ -125,6 +128,7 @@ export const AdminDashboard = ({
         email: manualEmail.trim(),
         titulo: manualTitulo.trim(),
         descricao: manualDescricao.trim(),
+        tag: manualTag,
       };
       const created = await api.createAdminTicket(adminKey, input);
       setShowManualModal(false);
@@ -145,13 +149,15 @@ export const AdminDashboard = ({
   // Filtragem em memória no client-side para busca instantânea
   const ticketsFiltrados = tickets.filter((t) => {
     if (filtroStatus && t.status !== filtroStatus) return false;
+    if (filtroTag && t.tag !== filtroTag) return false;
     if (filtroBusca.trim()) {
       const q = filtroBusca.toLowerCase();
       const matchProto = t.protocolo.toLowerCase().includes(q);
       const matchTitulo = t.titulo.toLowerCase().includes(q);
       const matchNome = t.solicitanteNome.toLowerCase().includes(q);
       const matchEmail = t.solicitanteEmail.toLowerCase().includes(q);
-      return matchProto || matchTitulo || matchNome || matchEmail;
+      const matchTag = t.tag ? t.tag.toLowerCase().includes(q) : false;
+      return matchProto || matchTitulo || matchNome || matchEmail || matchTag;
     }
     return true;
   });
@@ -255,6 +261,19 @@ export const AdminDashboard = ({
             <option value="FINALIZADO">Finalizado</option>
           </select>
 
+          <select
+            value={filtroTag}
+            onChange={(e) => setFiltroTag(e.target.value)}
+            className="select-status"
+          >
+            <option value="">Todas as Áreas (Tags)</option>
+            {CORPORATE_TAGS.map((tag) => (
+              <option key={tag.id} value={tag.name}>
+                {tag.icon} {tag.name}
+              </option>
+            ))}
+          </select>
+
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -292,24 +311,25 @@ export const AdminDashboard = ({
           <table className="corp-table">
             <thead>
               <tr>
-                <th style={{ width: 140 }}>Protocolo</th>
+                <th style={{ width: 130 }}>Protocolo</th>
                 <th>Assunto do Chamado</th>
-                <th style={{ width: 220 }}>Solicitante</th>
-                <th style={{ width: 160 }}>Status (Trello)</th>
-                <th style={{ width: 130 }}>Data Abertura</th>
-                <th style={{ width: 190, textAlign: 'right' }}>Ações</th>
+                <th style={{ width: 160 }}>Departamento</th>
+                <th style={{ width: 200 }}>Solicitante</th>
+                <th style={{ width: 150 }}>Status (Trello)</th>
+                <th style={{ width: 120 }}>Abertura</th>
+                <th style={{ width: 180, textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="table-empty-row">
+                  <td colSpan={7} className="table-empty-row">
                     Carregando registros de chamados...
                   </td>
                 </tr>
               ) : ticketsFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="table-empty-row">
+                  <td colSpan={7} className="table-empty-row">
                     Nenhum chamado encontrado para os filtros selecionados.
                   </td>
                 </tr>
@@ -323,6 +343,13 @@ export const AdminDashboard = ({
                       <div className="table-ticket-title" title={t.titulo}>
                         {t.titulo}
                       </div>
+                    </td>
+                    <td>
+                      {t.tag ? (
+                        <TagBadge tag={t.tag} size="sm" />
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Geral</span>
+                      )}
                     </td>
                     <td>
                       <div className="table-user-name">{t.solicitanteNome}</div>
@@ -377,6 +404,7 @@ export const AdminDashboard = ({
               <div className="modal-header-info">
                 <div className="ticket-protocol-row">
                   <span className="protocol-chip">{selectedTicket.protocolo}</span>
+                  {selectedTicket.tag && <TagBadge tag={selectedTicket.tag} />}
                   <StatusBadge status={selectedTicket.status} />
                 </div>
                 <h3 className="modal-title">{selectedTicket.titulo}</h3>
@@ -545,6 +573,21 @@ export const AdminDashboard = ({
                   value={manualTitulo}
                   onChange={(e) => setManualTitulo(e.target.value)}
                 />
+              </div>
+
+              <div className="form-field">
+                <label>Área / Departamento (Tag Trello) <span className="req">*</span></label>
+                <select
+                  value={manualTag}
+                  onChange={(e) => setManualTag(e.target.value)}
+                  className="select-status"
+                >
+                  {CORPORATE_TAGS.map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.icon} {t.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-field">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CreateTicketInput, Ticket } from '../types/ticket';
 import { api } from '../services/api';
 import { IconCheck, IconCopy, IconSend, IconTicket } from './Icons';
+import { CORPORATE_TAGS, TagBadge } from './TagBadge';
 
 interface CreateTicketViewProps {
   onTicketCreated: (ticket: Ticket) => void;
@@ -18,6 +19,7 @@ export const CreateTicketView = ({
   const [email, setEmail] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string>('TI & Sistemas');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ticketRecente, setTicketRecente] = useState<Ticket | null>(null);
@@ -45,12 +47,13 @@ export const CreateTicketView = ({
         email: emailTrim,
         titulo: tituloTrim,
         descricao: descTrim,
+        tag: selectedTag,
       };
 
       const result = await api.createTicket(input);
       setTicketRecente(result);
       onTicketCreated(result);
-      addToast(`Chamado ${result.protocolo} aberto com sucesso!`, 'success');
+      addToast(`Chamado ${result.protocolo} registrado com sucesso!`, 'success');
 
       setNome('');
       setEmail('');
@@ -81,26 +84,29 @@ export const CreateTicketView = ({
             <IconCheck size={28} />
           </div>
 
-          <h2 className="card-title text-center">Chamado Registrado com Sucesso</h2>
+          <h2 className="card-title text-center">Chamado Registrado no Sistema</h2>
           <p className="card-subtitle text-center">
-            Seu chamado foi registrado na central de atendimento e sincronizado com o fluxo da equipe técnica.
+            Sua solicitação foi indexada pelo serviço de atendimento e encaminhada para o fluxo do Trello.
           </p>
 
           <div className="protocol-voucher">
-            <span className="voucher-label">NÚMERO DO PROTOCOLO</span>
+            <div className="voucher-tag-pill">
+              <TagBadge tag={ticketRecente.tag || selectedTag} />
+            </div>
+            <span className="voucher-label">NÚMERO DE PROTOCOLO CORPORATIVO</span>
             <div className="voucher-code-wrapper">
               <span className="voucher-code">{ticketRecente.protocolo}</span>
               <button
                 type="button"
                 className="btn-icon"
                 onClick={handleCopyProtocol}
-                title="Copiar protocolo"
+                title="Copiar protocolo para a área de transferência"
               >
                 {copiado ? <IconCheck size={18} /> : <IconCopy size={18} />}
               </button>
             </div>
             <span className="voucher-hint">
-              Utilize este protocolo junto ao seu e-mail ({ticketRecente.solicitanteEmail}) para consultar atualizações.
+              Utilize este protocolo junto ao e-mail <strong>{ticketRecente.solicitanteEmail}</strong> para consultar o status e responder ao suporte.
             </span>
           </div>
 
@@ -110,14 +116,14 @@ export const CreateTicketView = ({
               className="btn btn-primary"
               onClick={() => onNavigateToTrack(ticketRecente.protocolo, ticketRecente.solicitanteEmail)}
             >
-              Acompanhar Atendimento Agora
+              Acompanhar Andamento
             </button>
             <button
               type="button"
               className="btn btn-secondary"
               onClick={() => setTicketRecente(null)}
             >
-              Abrir Outro Chamado
+              Registrar Outro Chamado
             </button>
           </div>
         </div>
@@ -125,12 +131,12 @@ export const CreateTicketView = ({
         <div className="card">
           <div className="card-header-styled">
             <div className="card-header-icon">
-              <IconTicket size={20} />
+              <IconTicket size={22} />
             </div>
             <div>
-              <h2 className="card-title">Novo Chamado Técnico</h2>
+              <h2 className="card-title">Abertura de Chamado Corporativo</h2>
               <p className="card-subtitle">
-                Descreva sua solicitação com clareza. Você poderá acompanhar o status e trocar mensagens sem necessidade de senha.
+                Central de Atendimento ao Colaborador e Cliente. Selecione a área responsável e detalhe sua solicitação.
               </p>
             </div>
           </div>
@@ -142,6 +148,41 @@ export const CreateTicketView = ({
           )}
 
           <form onSubmit={handleSubmit} className="form-corp">
+            {/* Seletor de Categoria / Tag Corporativa */}
+            <div className="form-field">
+              <label>
+                Área de Atendimento / Departamento <span className="req">*</span>
+              </label>
+              <span className="field-hint">
+                A categoria selecionada é sincronizada automaticamente como uma etiqueta colorida no cartão do Trello da equipe.
+              </span>
+
+              <div className="tag-selector-grid">
+                {CORPORATE_TAGS.map((t) => {
+                  const isSelected = selectedTag === t.name;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`tag-option-card ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setSelectedTag(t.name)}
+                    >
+                      <div className="tag-option-header">
+                        <span className="tag-option-icon">{t.icon}</span>
+                        <span className="tag-option-name">{t.name}</span>
+                        {isSelected && <span className="tag-selected-check">✓</span>}
+                      </div>
+                      <span className="tag-option-desc">{t.desc}</span>
+                      <div className="tag-trello-hint">
+                        <span className={`tag-dot-small dot-${t.colorName}`} />
+                        <span>Etiqueta {t.colorName.toUpperCase()} no Trello</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="form-row-2">
               <div className="form-field">
                 <label htmlFor="input-nome">
@@ -151,7 +192,7 @@ export const CreateTicketView = ({
                   id="input-nome"
                   type="text"
                   required
-                  placeholder="Ex: Ana Clara Ribeiro"
+                  placeholder="Ex: Carlos Eduardo Mendes"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   maxLength={100}
@@ -160,13 +201,13 @@ export const CreateTicketView = ({
 
               <div className="form-field">
                 <label htmlFor="input-email">
-                  E-mail Corporativo ou Pessoal <span className="req">*</span>
+                  E-mail de Contato <span className="req">*</span>
                 </label>
                 <input
                   id="input-email"
                   type="email"
                   required
-                  placeholder="ana.ribeiro@empresa.com"
+                  placeholder="carlos.mendes@empresa.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   maxLength={150}
@@ -176,13 +217,13 @@ export const CreateTicketView = ({
 
             <div className="form-field">
               <label htmlFor="input-titulo">
-                Assunto / Resumo do Problema <span className="req">*</span>
+                Assunto do Chamado <span className="req">*</span>
               </label>
               <input
                 id="input-titulo"
                 type="text"
                 required
-                placeholder="Ex: Falha ao exportar relatório financeiro em PDF"
+                placeholder="Ex: Inconsistência na conciliação bancária do fechamento mensal"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 maxLength={150}
@@ -192,7 +233,7 @@ export const CreateTicketView = ({
             <div className="form-field">
               <div className="field-label-group">
                 <label htmlFor="input-descricao">
-                  Detalhamento da Solicitação <span className="req">*</span>
+                  Descrição Detalhada do Problema ou Solicitação <span className="req">*</span>
                 </label>
                 <span className="char-count">{descricao.length}/2000</span>
               </div>
@@ -200,7 +241,7 @@ export const CreateTicketView = ({
                 id="input-descricao"
                 rows={5}
                 required
-                placeholder="Informe detalhes relevantes: mensagens de erro recebidas, passos para reproduzir o problema e o impacto na rotina."
+                placeholder="Forneça detalhes como: onde o problema ocorre, mensagens de erro apresentadas e prazos ou impacto no trabalho."
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 maxLength={2000}
@@ -214,7 +255,7 @@ export const CreateTicketView = ({
                 disabled={loading}
               >
                 <IconSend size={16} />
-                <span>{loading ? 'Registrando Chamado...' : 'Registrar Chamado'}</span>
+                <span>{loading ? 'Transmitindo Chamado...' : 'Registrar Solicitação'}</span>
               </button>
             </div>
           </form>

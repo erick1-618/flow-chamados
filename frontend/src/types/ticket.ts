@@ -20,6 +20,7 @@ export interface Ticket {
   trelloCardId?: string;
   trelloListId?: string;
   trelloCardUrl?: string;
+  tag?: string;
   createdAt: string;
   updatedAt: string;
   messages: Message[];
@@ -30,6 +31,7 @@ export interface CreateTicketInput {
   email: string;
   titulo: string;
   descricao: string;
+  tag?: string;
 }
 
 export interface TrackTicketInput {

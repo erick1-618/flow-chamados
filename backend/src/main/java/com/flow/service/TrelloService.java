@@ -57,12 +57,25 @@ public class TrelloService {
             String solicitanteEmail,
             String descricao
     ) {
+        return createCard(protocolo, titulo, solicitanteNome, solicitanteEmail, descricao, null);
+    }
+
+    public TrelloCardResult createCard(
+            String protocolo,
+            String titulo,
+            String solicitanteNome,
+            String solicitanteEmail,
+            String descricao,
+            String tag
+    ) {
         String cardName = String.format("[%s] - %s", protocolo, titulo);
+        String tagDisplay = (tag != null && !tag.isBlank()) ? tag.trim() : "Geral";
         String cardDesc = String.format(
                 "### Chamado %s\n\n" +
                 "- **Solicitante:** %s\n" +
                 "- **E-mail:** %s\n" +
                 "- **Protocolo:** `%s`\n" +
+                "- **Categoria / Tag:** `%s`\n" +
                 "- **Criado em:** %s\n\n" +
                 "---\n\n" +
                 "#### Descrição do Problema:\n%s\n",
@@ -70,6 +83,7 @@ public class TrelloService {
                 solicitanteNome,
                 solicitanteEmail,
                 protocolo,
+                tagDisplay,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                 descricao
         );
@@ -99,6 +113,12 @@ public class TrelloService {
                 String cardId = (String) bodyMap.get("id");
                 String shortUrl = (String) bodyMap.get("shortUrl");
                 String cardUrl = shortUrl != null ? shortUrl : ("https://trello.com/c/" + cardId);
+
+                // Aplica a label/tag correspondente no card do Trello
+                if (tag != null && !tag.isBlank()) {
+                    addLabelToCard(cardId, tag);
+                }
+
                 return new TrelloCardResult(cardId, listCriadoId, cardUrl);
             }
         } catch (Exception ex) {
@@ -107,6 +127,33 @@ public class TrelloService {
 
         String fallbackId = "trello_card_" + protocolo;
         return new TrelloCardResult(fallbackId, listCriadoId, "https://trello.com/c/" + fallbackId);
+    }
+
+    public void addLabelToCard(String cardId, String tag) {
+        if (!isConfigured() || cardId == null || cardId.startsWith("mock_") || tag == null || tag.isBlank()) return;
+        try {
+            String color = mapTagToTrelloColor(tag);
+            String url = String.format("%s/cards/%s/labels?key=%s&token=%s&name=%s&color=%s",
+                    TRELLO_API_BASE, cardId, apiKey, token,
+                    java.net.URLEncoder.encode(tag.trim(), java.nio.charset.StandardCharsets.UTF_8),
+                    color);
+            restTemplate.postForEntity(url, null, Map.class);
+            log.info("Label '{}' (cor: {}) vinculada com sucesso ao card {}", tag, color, cardId);
+        } catch (Exception ex) {
+            log.warn("Falha ao adicionar label '{}' ao card {}: {}", tag, cardId, ex.getMessage());
+        }
+    }
+
+    private String mapTagToTrelloColor(String tag) {
+        if (tag == null) return "blue";
+        String lower = tag.toLowerCase();
+        if (lower.contains("ti") || lower.contains("sistema") || lower.contains("software")) return "blue";
+        if (lower.contains("financeiro") || lower.contains("fiscal") || lower.contains("faturamento")) return "green";
+        if (lower.contains("rh") || lower.contains("pessoal") || lower.contains("recursos humanos")) return "purple";
+        if (lower.contains("opera") || lower.contains("logística") || lower.contains("logistica")) return "orange";
+        if (lower.contains("infra") || lower.contains("rede") || lower.contains("hardware") || lower.contains("crítico")) return "red";
+        if (lower.contains("dúvida") || lower.contains("duvida") || lower.contains("geral")) return "yellow";
+        return "blue";
     }
 
     public boolean setupWebhook() {

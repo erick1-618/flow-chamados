@@ -48,12 +48,15 @@ public class TicketService {
     public Ticket createTicket(CreateTicketRequest request) {
         String protocolo = generateProtocol();
 
+        String tag = (request.getTag() != null && !request.getTag().isBlank()) ? request.getTag().trim() : "Geral";
+
         Ticket ticket = new Ticket(
                 protocolo,
                 request.getTitulo().trim(),
                 request.getDescricao().trim(),
                 request.getNome().trim(),
-                request.getEmail().trim().toLowerCase()
+                request.getEmail().trim().toLowerCase(),
+                tag
         );
 
         TrelloCardResult trelloResult = trelloService.createCard(
@@ -61,7 +64,8 @@ public class TicketService {
                 ticket.getTitulo(),
                 ticket.getSolicitanteNome(),
                 ticket.getSolicitanteEmail(),
-                ticket.getDescricao()
+                ticket.getDescricao(),
+                tag
         );
 
         ticket.setTrelloCardId(trelloResult.getCardId());

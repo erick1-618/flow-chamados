@@ -45,6 +45,9 @@ public class Ticket {
     @Column(name = "trello_card_url", length = 255)
     private String trelloCardUrl;
 
+    @Column(name = "tag", length = 60)
+    private String tag;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -60,11 +63,16 @@ public class Ticket {
     }
 
     public Ticket(String protocolo, String titulo, String descricao, String solicitanteNome, String solicitanteEmail) {
+        this(protocolo, titulo, descricao, solicitanteNome, solicitanteEmail, null);
+    }
+
+    public Ticket(String protocolo, String titulo, String descricao, String solicitanteNome, String solicitanteEmail, String tag) {
         this.protocolo = protocolo;
         this.titulo = titulo;
         this.descricao = descricao;
         this.solicitanteNome = solicitanteNome;
         this.solicitanteEmail = solicitanteEmail;
+        this.tag = tag;
         this.status = TicketStatus.CRIADO;
     }
 
@@ -181,6 +189,14 @@ public class Ticket {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public List<Message> getMessages() {
