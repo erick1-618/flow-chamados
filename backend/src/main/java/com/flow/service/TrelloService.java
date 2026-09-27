@@ -112,16 +112,30 @@ public class TrelloService {
     public boolean setupWebhook() {
         if (!isConfigured()) return false;
         try {
+            String resolvedModelId = boardId;
+            if (boardId != null && boardId.length() < 24) {
+                try {
+                    String boardUrl = String.format("%s/boards/%s?key=%s&token=%s&fields=id", TRELLO_API_BASE, boardId, apiKey, token);
+                    Map<String, Object> boardInfo = restTemplate.getForObject(boardUrl, Map.class);
+                    if (boardInfo != null && boardInfo.containsKey("id")) {
+                        resolvedModelId = (String) boardInfo.get("id");
+                    }
+                } catch (Exception e) {
+                    log.warn("Nao foi possivel resolver idModel a partir do boardId {}, usando valor direto: {}", boardId, e.getMessage());
+                }
+            }
+
             String url = String.format("%s/webhooks/?key=%s&token=%s", TRELLO_API_BASE, apiKey, token);
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("callbackURL", webhookCallbackUrl);
-            body.add("idModel", boardId);
-            body.add("description", "Flow Chamados Sync Webhook");
+            Map<String, String> body = Map.of(
+                    "callbackURL", webhookCallbackUrl,
+                    "idModel", resolvedModelId,
+                    "description", "Flow Chamados Sync Webhook"
+            );
 
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
             return response.getStatusCode().is2xxSuccessful();
         } catch (Exception ex) {
