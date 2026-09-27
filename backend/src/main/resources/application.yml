@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: flow-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:flow_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+# Configuracoes de integracao com o Trello
+trello:
+  enabled: ${TRELLO_ENABLED:true}
+  api-key: ${TRELLO_API_KEY:mock_key}
+  token: ${TRELLO_TOKEN:mock_token}
+  board-id: ${TRELLO_BOARD_ID:mock_board_id}
+  webhook-callback-url: ${TRELLO_WEBHOOK_URL:https://flow.api.erickborba.dev.br/api/webhooks/trello}
+  lists:
+    criado: ${TRELLO_LIST_CRIADO:list_id_criado}
+    em-andamento: ${TRELLO_LIST_EM_ANDAMENTO:list_id_em_andamento}
+    aguardando-acao: ${TRELLO_LIST_AGUARDANDO_ACAO:list_id_aguardando_acao}
+    finalizado: ${TRELLO_LIST_FINALIZADO:list_id_finalizado}
+
+# Seguranca e CORS
+app:
+  admin-api-key: ${ADMIN_API_KEY:flow-admin-secret-2026}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,https://*.vercel.app,https://*.erickborba.dev.br}
