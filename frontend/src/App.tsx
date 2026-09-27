@@ -572,7 +572,15 @@ export function App() {
                             <div style={{ display: 'flex', gap: '0.4rem' }}>
                               <button
                                 className="btn btn-secondary btn-sm"
-                                onClick={() => setSelectedAdminTicket(t)}
+                                onClick={async () => {
+                                  setSelectedAdminTicket(t);
+                                  try {
+                                    const fullTicket = await api.getAdminTicket(adminKey, t.id);
+                                    setSelectedAdminTicket(fullTicket);
+                                  } catch (err) {
+                                    console.error('Erro ao buscar detalhes do chamado:', err);
+                                  }
+                                }}
                               >
                                 Detalhes / Chat
                               </button>

@@ -18,7 +18,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    open-in-view: false
+    open-in-view: true
 
 # Configuracoes de integracao com o Trello
 trello:

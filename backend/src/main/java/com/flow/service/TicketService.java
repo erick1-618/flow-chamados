@@ -144,6 +144,9 @@ public class TicketService {
     @Transactional(readOnly = true)
     public List<Ticket> listTicketsForAdmin(TicketStatus status, LocalDateTime dataInicio, LocalDateTime dataFim, String search) {
         Specification<Ticket> spec = (root, query, cb) -> {
+            if (query != null) {
+                query.distinct(true);
+            }
             List<Predicate> predicates = new ArrayList<>();
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));

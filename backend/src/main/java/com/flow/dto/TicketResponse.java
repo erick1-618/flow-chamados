@@ -3,6 +3,8 @@ package com.flow.dto;
 import com.flow.model.Ticket;
 import com.flow.model.TicketStatus;
 
+import org.hibernate.Hibernate;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +41,7 @@ public class TicketResponse {
         this.trelloCardUrl = ticket.getTrelloCardUrl();
         this.createdAt = ticket.getCreatedAt();
         this.updatedAt = ticket.getUpdatedAt();
-        if (ticket.getMessages() != null) {
+        if (ticket.getMessages() != null && Hibernate.isInitialized(ticket.getMessages())) {
             this.messages = ticket.getMessages().stream()
                     .map(MessageResponse::new)
                     .collect(Collectors.toList());
