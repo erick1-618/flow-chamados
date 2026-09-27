@@ -44,7 +44,6 @@ export const TrackTicketView = ({
     try {
       const ticket = await api.trackTicket({ protocolo: protoTrim, email: emailTrim });
       onTicketLoaded(ticket);
-      addToast(`Chamado ${ticket.protocolo} localizado!`, 'info');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Chamado não encontrado.';
       setErroBusca(msg);
@@ -71,7 +70,7 @@ export const TrackTicketView = ({
       });
 
       setNovaMensagem('');
-      addToast('Mensagem enviada à equipe!', 'success');
+      addToast('Mensagem enviada!', 'success');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Falha ao enviar mensagem.';
       addToast(msg, 'error');
@@ -85,17 +84,17 @@ export const TrackTicketView = ({
     const status = ticketAtual.status;
 
     switch (stepNumber) {
-      case 1: // Criado
+      case 1:
         return status === 'CRIADO' ? 'active' : 'completed';
-      case 2: // Em Andamento
+      case 2:
         if (status === 'CRIADO') return '';
         if (status === 'EM_ANDAMENTO') return 'active';
         return 'completed';
-      case 3: // Aguardando Ação
+      case 3:
         if (status === 'CRIADO' || status === 'EM_ANDAMENTO') return '';
         if (status === 'AGUARDANDO_ACAO') return 'active';
         return 'completed';
-      case 4: // Finalizado
+      case 4:
         return status === 'FINALIZADO' ? 'completed active' : '';
       default:
         return '';
@@ -104,19 +103,9 @@ export const TrackTicketView = ({
 
   return (
     <div className="view-container">
-      {/* Barra de Consulta */}
+      {/* Busca Rápida e Direta */}
       <div className="card">
-        <div className="card-header-styled">
-          <div className="card-header-icon">
-            <IconSearch size={20} />
-          </div>
-          <div>
-            <h2 className="card-title">Consultar Andamento do Chamado</h2>
-            <p className="card-subtitle">
-              Insira o número do protocolo gerado e o e-mail utilizado na abertura.
-            </p>
-          </div>
-        </div>
+        <h2 className="card-title" style={{ marginBottom: '1rem' }}>Consultar Chamado</h2>
 
         {erroBusca && (
           <div className="alert alert-error" role="alert">
@@ -124,86 +113,75 @@ export const TrackTicketView = ({
           </div>
         )}
 
-        <form onSubmit={handleBuscar} className="form-corp">
-          <div className="form-row-2">
-            <div className="form-field">
-              <label htmlFor="track-protocolo">Número do Protocolo</label>
-              <input
-                id="track-protocolo"
-                type="text"
-                required
-                placeholder="Ex: FLOW-1042"
-                value={protocolo}
-                onChange={(e) => setProtocolo(e.target.value)}
-              />
-            </div>
+        <form onSubmit={handleBuscar} className="form-inline-search">
+          <input
+            type="text"
+            required
+            placeholder="Protocolo (ex: FLOW-1042)"
+            value={protocolo}
+            onChange={(e) => setProtocolo(e.target.value)}
+            className="input-proto"
+          />
 
-            <div className="form-field">
-              <label htmlFor="track-email">E-mail do Solicitante</label>
-              <input
-                id="track-email"
-                type="email"
-                required
-                placeholder="Ex: seu-email@empresa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </div>
+          <input
+            type="email"
+            required
+            placeholder="E-mail informado"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input-email"
+          />
 
-          <div className="form-footer-action">
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loadingBusca}
-            >
-              <IconSearch size={16} />
-              <span>{loadingBusca ? 'Consultando Base...' : 'Consultar Chamado'}</span>
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loadingBusca}
+          >
+            <IconSearch size={15} />
+            <span>{loadingBusca ? 'Buscando...' : 'Buscar'}</span>
+          </button>
         </form>
       </div>
 
-      {/* Detalhes do Chamado Localizado */}
+      {/* Detalhes do Chamado */}
       {ticketAtual && (
         <div className="card ticket-detail-card">
-          {/* Pipeline Visual de Status */}
+          {/* Stepper Linear Compacto */}
           <div className="pipeline-container">
             <div className="pipeline-track">
               <div className={`pipeline-step ${getStepState(1)}`}>
-                <div className="step-circle">1</div>
-                <div className="step-text">Criado</div>
+                <span className="step-circle">1</span>
+                <span className="step-text">Criado</span>
               </div>
               <div className="step-line" />
               <div className={`pipeline-step ${getStepState(2)}`}>
-                <div className="step-circle">2</div>
-                <div className="step-text">Em Andamento</div>
+                <span className="step-circle">2</span>
+                <span className="step-text">Em Andamento</span>
               </div>
               <div className="step-line" />
               <div className={`pipeline-step ${getStepState(3)}`}>
-                <div className="step-circle">3</div>
-                <div className="step-text">Aguardando Ação</div>
+                <span className="step-circle">3</span>
+                <span className="step-text">Aguardando</span>
               </div>
               <div className="step-line" />
               <div className={`pipeline-step ${getStepState(4)}`}>
-                <div className="step-circle">4</div>
-                <div className="step-text">Finalizado</div>
+                <span className="step-circle">4</span>
+                <span className="step-text">Finalizado</span>
               </div>
             </div>
           </div>
 
-          {/* Cabeçalho do Chamado */}
+          {/* Cabeçalho */}
           <div className="ticket-meta-header">
             <div>
               <div className="ticket-protocol-row">
                 <span className="protocol-chip">{ticketAtual.protocolo}</span>
-                {ticketAtual.tag && <TagBadge tag={ticketAtual.tag} />}
-                <StatusBadge status={ticketAtual.status} />
+                {ticketAtual.tag && <TagBadge tag={ticketAtual.tag} size="sm" />}
+                <StatusBadge status={ticketAtual.status} size="sm" />
               </div>
               <h3 className="ticket-title-large">{ticketAtual.titulo}</h3>
               <p className="ticket-author-info">
-                Aberto por <strong>{ticketAtual.solicitanteNome}</strong> em{' '}
-                {new Date(ticketAtual.createdAt).toLocaleString('pt-BR')}
+                {ticketAtual.solicitanteNome} • {new Date(ticketAtual.createdAt).toLocaleString('pt-BR')}
               </p>
             </div>
 
@@ -211,33 +189,28 @@ export const TrackTicketView = ({
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={() => handleBuscar()}
-              title="Recarregar dados"
+              title="Atualizar"
             >
-              <IconRefresh size={14} />
+              <IconRefresh size={13} />
               <span>Atualizar</span>
             </button>
           </div>
 
-          {/* Descrição Original */}
+          {/* Descrição */}
           <div className="ticket-description-box">
-            <span className="desc-box-label">DESCRIÇÃO INICIAL DA SOLICITAÇÃO</span>
             <p className="desc-box-content">{ticketAtual.descricao}</p>
           </div>
 
-          {/* Histórico de Mensagens / Chat */}
+          {/* Conversa / Mensagens */}
           <div className="chat-section">
             <div className="chat-header">
-              <h4 className="chat-title">
-                Histórico de Mensagens ({ticketAtual.messages?.length || 0})
-              </h4>
-              <span className="chat-sync-hint">Sincronizado com a equipe</span>
+              <span className="chat-title">Mensagens ({ticketAtual.messages?.length || 0})</span>
             </div>
 
             <div className="chat-messages-scroll">
               {!ticketAtual.messages || ticketAtual.messages.length === 0 ? (
                 <div className="chat-empty">
-                  <p>Nenhuma mensagem adicional trocada até o momento.</p>
-                  <span>Envie uma mensagem abaixo caso precise complementar informações.</span>
+                  <p>Nenhuma mensagem enviada ainda.</p>
                 </div>
               ) : (
                 ticketAtual.messages.map((m) => {
@@ -249,7 +222,7 @@ export const TrackTicketView = ({
                     >
                       <div className={`chat-bubble ${isCliente ? 'bubble-client' : 'bubble-support'}`}>
                         <div className="bubble-author">
-                          {isCliente ? 'Você' : 'Suporte Técnico (Equipe)'}
+                          {isCliente ? 'Você' : 'Suporte'}
                         </div>
                         <div className="bubble-body">{m.conteudo}</div>
                         <div className="bubble-time">
@@ -265,11 +238,10 @@ export const TrackTicketView = ({
               )}
             </div>
 
-            {/* Input de Resposta */}
             <form onSubmit={handleEnviarMensagem} className="chat-input-form">
               <input
                 type="text"
-                placeholder="Escreva uma mensagem ou resposta para a equipe de suporte..."
+                placeholder="Enviar mensagem ou resposta ao suporte..."
                 value={novaMensagem}
                 onChange={(e) => setNovaMensagem(e.target.value)}
                 maxLength={1000}
@@ -280,8 +252,8 @@ export const TrackTicketView = ({
                 className="btn btn-primary btn-chat-send"
                 disabled={enviandoMensagem || !novaMensagem.trim()}
               >
-                <IconSend size={16} />
-                <span>{enviandoMensagem ? 'Enviando...' : 'Enviar'}</span>
+                <IconSend size={14} />
+                <span>{enviandoMensagem ? '...' : 'Enviar'}</span>
               </button>
             </form>
           </div>

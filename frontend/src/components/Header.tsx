@@ -1,31 +1,20 @@
-import type { HealthCheckResponse } from '../types/ticket';
 import { IconTicket, IconSearch, IconShield } from './Icons';
+import type { HealthCheckResponse } from '../types/ticket';
 
 interface HeaderProps {
   activeTab: 'abrir' | 'acompanhar' | 'admin';
   onTabChange: (tab: 'abrir' | 'acompanhar' | 'admin') => void;
-  backendHealth: HealthCheckResponse | null;
+  backendHealth?: HealthCheckResponse | null;
 }
 
-export const Header = ({ activeTab, onTabChange, backendHealth }: HeaderProps) => {
+export const Header = ({ activeTab, onTabChange }: HeaderProps) => {
+
   return (
     <header className="corp-header">
       <div className="corp-header-inner">
         <div className="brand-group">
-          <div className="brand-badge">
-            <span className="brand-logo-text">FLOW</span>
-            <span className="brand-subtext">Enterprise Support</span>
-          </div>
-
-          <div className="system-status-indicator">
-            <span
-              className={`status-indicator-dot ${backendHealth ? 'active' : 'inactive'}`}
-              title={backendHealth ? 'API & Trello Sync Operacionais' : 'Conectando ao serviço...'}
-            />
-            <span className="status-indicator-label">
-              {backendHealth ? 'Operacional' : 'Conectando'}
-            </span>
-          </div>
+          <span className="brand-logo-text">Flow</span>
+          <span className="brand-subtext">Chamados</span>
         </div>
 
         <nav className="tab-pill-group" role="tablist">
@@ -35,8 +24,8 @@ export const Header = ({ activeTab, onTabChange, backendHealth }: HeaderProps) =
             className={`tab-pill ${activeTab === 'abrir' ? 'active' : ''}`}
             onClick={() => onTabChange('abrir')}
           >
-            <IconTicket size={16} />
-            <span>Abrir Chamado</span>
+            <IconTicket size={15} />
+            <span>Novo Chamado</span>
           </button>
 
           <button
@@ -45,8 +34,8 @@ export const Header = ({ activeTab, onTabChange, backendHealth }: HeaderProps) =
             className={`tab-pill ${activeTab === 'acompanhar' ? 'active' : ''}`}
             onClick={() => onTabChange('acompanhar')}
           >
-            <IconSearch size={16} />
-            <span>Acompanhar & Chat</span>
+            <IconSearch size={15} />
+            <span>Consultar</span>
           </button>
 
           <button
@@ -55,8 +44,8 @@ export const Header = ({ activeTab, onTabChange, backendHealth }: HeaderProps) =
             className={`tab-pill ${activeTab === 'admin' ? 'active' : ''}`}
             onClick={() => onTabChange('admin')}
           >
-            <IconShield size={16} />
-            <span>Painel da Equipe</span>
+            <IconShield size={15} />
+            <span>Admin</span>
           </button>
         </nav>
       </div>

@@ -99,4 +99,17 @@ public class TicketAdminController {
                 "message", success ? "Webhook registrado com sucesso no Trello!" : "Falha ao registrar webhook. Verifique credenciais."
         ));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteTicket(
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey,
+            @PathVariable Long id
+    ) {
+        checkAdminAuth(adminKey);
+        ticketService.deleteTicket(id);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Chamado e mensagens associadas excluídos com sucesso."
+        ));
+    }
 }

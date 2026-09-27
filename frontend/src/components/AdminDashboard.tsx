@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { CreateTicketInput, Ticket, TicketStatus } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
-import { TagBadge, CORPORATE_TAGS } from './TagBadge';
 import {
   IconClose,
   IconExternalLink,
@@ -11,7 +10,9 @@ import {
   IconSearch,
   IconSend,
   IconShield,
+  IconTrash,
 } from './Icons';
+
 
 interface AdminDashboardProps {
   adminKey: string;
@@ -35,7 +36,6 @@ export const AdminDashboard = ({
   addToast,
 }: AdminDashboardProps) => {
   const [filtroStatus, setFiltroStatus] = useState<TicketStatus | ''>('');
-  const [filtroTag, setFiltroTag] = useState<string>('');
   const [filtroBusca, setFiltroBusca] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -49,7 +49,6 @@ export const AdminDashboard = ({
   const [manualEmail, setManualEmail] = useState('');
   const [manualTitulo, setManualTitulo] = useState('');
   const [manualDescricao, setManualDescricao] = useState('');
-  const [manualTag, setManualTag] = useState('TI & Sistemas');
   const [salvandoManual, setSalvandoManual] = useState(false);
 
   // Autenticação simples com a chave corporativa
@@ -128,7 +127,6 @@ export const AdminDashboard = ({
         email: manualEmail.trim(),
         titulo: manualTitulo.trim(),
         descricao: manualDescricao.trim(),
-        tag: manualTag,
       };
       const created = await api.createAdminTicket(adminKey, input);
       setShowManualModal(false);
@@ -146,18 +144,36 @@ export const AdminDashboard = ({
     }
   };
 
+  // Exclusão de chamado (apaga DB + move para lista Excluido no Trello)
+  const handleDeleteTicket = async (id: number, protocolo: string) => {
+    const confirmDelete = window.confirm(
+      `Deseja realmente excluir o chamado ${protocolo}? Esta ação apagará todas as mensagens e moverá o cartão para 'Excluído' no Trello.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await api.deleteAdminTicket(adminKey, id);
+      addToast(`Chamado ${protocolo} excluído com sucesso.`, 'info');
+      if (selectedTicket?.id === id) {
+        setSelectedTicket(null);
+      }
+      onReloadTickets();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao excluir chamado.';
+      addToast(msg, 'error');
+    }
+  };
+
   // Filtragem em memória no client-side para busca instantânea
   const ticketsFiltrados = tickets.filter((t) => {
     if (filtroStatus && t.status !== filtroStatus) return false;
-    if (filtroTag && t.tag !== filtroTag) return false;
     if (filtroBusca.trim()) {
       const q = filtroBusca.toLowerCase();
       const matchProto = t.protocolo.toLowerCase().includes(q);
       const matchTitulo = t.titulo.toLowerCase().includes(q);
       const matchNome = t.solicitanteNome.toLowerCase().includes(q);
       const matchEmail = t.solicitanteEmail.toLowerCase().includes(q);
-      const matchTag = t.tag ? t.tag.toLowerCase().includes(q) : false;
-      return matchProto || matchTitulo || matchNome || matchEmail || matchTag;
+      return matchProto || matchTitulo || matchNome || matchEmail;
     }
     return true;
   });
@@ -212,29 +228,30 @@ export const AdminDashboard = ({
 
   return (
     <div className="view-container-full">
-      {/* Grade de Métricas Corporativas */}
-      <div className="metrics-grid">
-        <div className="metric-tile">
-          <span className="metric-label">Total de Chamados</span>
-          <span className="metric-number">{countTotal}</span>
+      {/* Resumo compacto de métricas */}
+      <div className="admin-stats-bar">
+        <div className="admin-stat-item">
+          <span className="stat-label">Total</span>
+          <span className="stat-val">{countTotal}</span>
         </div>
-        <div className="metric-tile tile-criado">
-          <span className="metric-label">Criados</span>
-          <span className="metric-number">{countCriado}</span>
+        <div className="admin-stat-item">
+          <span className="stat-label">Criados</span>
+          <span className="stat-val stat-criado">{countCriado}</span>
         </div>
-        <div className="metric-tile tile-andamento">
-          <span className="metric-label">Em Andamento</span>
-          <span className="metric-number">{countAndamento}</span>
+        <div className="admin-stat-item">
+          <span className="stat-label">Em Andamento</span>
+          <span className="stat-val stat-andamento">{countAndamento}</span>
         </div>
-        <div className="metric-tile tile-aguardando">
-          <span className="metric-label">Aguardando Ação</span>
-          <span className="metric-number">{countAguardando}</span>
+        <div className="admin-stat-item">
+          <span className="stat-label">Aguardando</span>
+          <span className="stat-val stat-aguardando">{countAguardando}</span>
         </div>
-        <div className="metric-tile tile-finalizado">
-          <span className="metric-label">Finalizados</span>
-          <span className="metric-number">{countFinalizado}</span>
+        <div className="admin-stat-item">
+          <span className="stat-label">Finalizados</span>
+          <span className="stat-val stat-finalizado">{countFinalizado}</span>
         </div>
       </div>
+
 
       {/* Barra de Ferramentas / Filtros */}
       <div className="toolbar-card">
@@ -259,19 +276,6 @@ export const AdminDashboard = ({
             <option value="EM_ANDAMENTO">Em Andamento</option>
             <option value="AGUARDANDO_ACAO">Aguardando Ação</option>
             <option value="FINALIZADO">Finalizado</option>
-          </select>
-
-          <select
-            value={filtroTag}
-            onChange={(e) => setFiltroTag(e.target.value)}
-            className="select-status"
-          >
-            <option value="">Todas as Áreas (Tags)</option>
-            {CORPORATE_TAGS.map((tag) => (
-              <option key={tag.id} value={tag.name}>
-                {tag.icon} {tag.name}
-              </option>
-            ))}
           </select>
 
           <button
@@ -311,25 +315,24 @@ export const AdminDashboard = ({
           <table className="corp-table">
             <thead>
               <tr>
-                <th style={{ width: 130 }}>Protocolo</th>
+                <th style={{ width: 140 }}>Protocolo</th>
                 <th>Assunto do Chamado</th>
-                <th style={{ width: 160 }}>Departamento</th>
-                <th style={{ width: 200 }}>Solicitante</th>
-                <th style={{ width: 150 }}>Status (Trello)</th>
-                <th style={{ width: 120 }}>Abertura</th>
-                <th style={{ width: 180, textAlign: 'right' }}>Ações</th>
+                <th style={{ width: 220 }}>Solicitante</th>
+                <th style={{ width: 160 }}>Status (Trello)</th>
+                <th style={{ width: 130 }}>Data Abertura</th>
+                <th style={{ width: 190, textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="table-empty-row">
+                  <td colSpan={6} className="table-empty-row">
                     Carregando registros de chamados...
                   </td>
                 </tr>
               ) : ticketsFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="table-empty-row">
+                  <td colSpan={6} className="table-empty-row">
                     Nenhum chamado encontrado para os filtros selecionados.
                   </td>
                 </tr>
@@ -343,13 +346,6 @@ export const AdminDashboard = ({
                       <div className="table-ticket-title" title={t.titulo}>
                         {t.titulo}
                       </div>
-                    </td>
-                    <td>
-                      {t.tag ? (
-                        <TagBadge tag={t.tag} size="sm" />
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Geral</span>
-                      )}
                     </td>
                     <td>
                       <div className="table-user-name">{t.solicitanteNome}</div>
@@ -372,7 +368,7 @@ export const AdminDashboard = ({
                           className="btn btn-secondary btn-xs"
                           onClick={() => handleOpenDetail(t)}
                         >
-                          Ver Detalhes
+                          Detalhes
                         </button>
                         {t.trelloCardUrl && (
                           <a
@@ -380,12 +376,21 @@ export const AdminDashboard = ({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-trello-link btn-xs"
-                            title="Abrir cartão correspondente no Trello"
+                            title="Abrir cartão no Trello"
                           >
                             <span>Trello</span>
                             <IconExternalLink size={12} />
                           </a>
                         )}
+                        <button
+                          type="button"
+                          className="btn btn-danger-outline btn-xs"
+                          onClick={() => handleDeleteTicket(t.id, t.protocolo)}
+                          title="Excluir chamado"
+                        >
+                          <IconTrash size={12} />
+                          <span>Excluir</span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -404,12 +409,23 @@ export const AdminDashboard = ({
               <div className="modal-header-info">
                 <div className="ticket-protocol-row">
                   <span className="protocol-chip">{selectedTicket.protocolo}</span>
-                  {selectedTicket.tag && <TagBadge tag={selectedTicket.tag} />}
                   <StatusBadge status={selectedTicket.status} />
+                  {selectedTicket.trelloCardUrl && (
+                    <a
+                      href={selectedTicket.trelloCardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-trello-link btn-xs"
+                      title="Abrir no Trello"
+                    >
+                      <span>Quadro Trello</span>
+                      <IconExternalLink size={12} />
+                    </a>
+                  )}
                 </div>
                 <h3 className="modal-title">{selectedTicket.titulo}</h3>
                 <span className="modal-subtitle">
-                  Solicitante: <strong>{selectedTicket.solicitanteNome}</strong> ({selectedTicket.solicitanteEmail}) • Criado em{' '}
+                  Solicitante: <strong>{selectedTicket.solicitanteNome}</strong> ({selectedTicket.solicitanteEmail}) • Aberto em{' '}
                   {new Date(selectedTicket.createdAt).toLocaleString('pt-BR')}
                 </span>
               </div>
@@ -424,27 +440,6 @@ export const AdminDashboard = ({
             </div>
 
             <div className="modal-body">
-              {/* Aviso Estrito do Trello */}
-              <div className="trello-status-banner">
-                <div className="trello-banner-text">
-                  <strong>Fluxo de Status Sincronizado via Trello</strong>
-                  <p>
-                    A transição de status deste chamado é controlada movendo o cartão entre as colunas do seu quadro no Trello.
-                  </p>
-                </div>
-                {selectedTicket.trelloCardUrl && (
-                  <a
-                    href={selectedTicket.trelloCardUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-trello-link"
-                  >
-                    <span>Abrir Card no Trello</span>
-                    <IconExternalLink size={14} />
-                  </a>
-                )}
-              </div>
-
               {/* Descrição Original */}
               <div className="ticket-description-box">
                 <span className="desc-box-label">DESCRIÇÃO INICIAL</span>
@@ -513,7 +508,15 @@ export const AdminDashboard = ({
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-danger-outline btn-sm"
+                onClick={() => handleDeleteTicket(selectedTicket.id, selectedTicket.protocolo)}
+              >
+                <IconTrash size={14} />
+                <span>Excluir Chamado</span>
+              </button>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
@@ -573,21 +576,6 @@ export const AdminDashboard = ({
                   value={manualTitulo}
                   onChange={(e) => setManualTitulo(e.target.value)}
                 />
-              </div>
-
-              <div className="form-field">
-                <label>Área / Departamento (Tag Trello) <span className="req">*</span></label>
-                <select
-                  value={manualTag}
-                  onChange={(e) => setManualTag(e.target.value)}
-                  className="select-status"
-                >
-                  {CORPORATE_TAGS.map((t) => (
-                    <option key={t.id} value={t.name}>
-                      {t.icon} {t.name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div className="form-field">

@@ -17,10 +17,10 @@ export interface Ticket {
   solicitanteNome: string;
   solicitanteEmail: string;
   status: TicketStatus;
+  tag?: string;
   trelloCardId?: string;
   trelloListId?: string;
   trelloCardUrl?: string;
-  tag?: string;
   createdAt: string;
   updatedAt: string;
   messages: Message[];
@@ -33,6 +33,7 @@ export interface CreateTicketInput {
   descricao: string;
   tag?: string;
 }
+
 
 export interface TrackTicketInput {
   protocolo: string;

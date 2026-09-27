@@ -22,14 +22,17 @@ public class CreateTicketRequest {
     @Size(min = 10, message = "A descrição deve ter pelo menos 10 caracteres")
     private String descricao;
 
-    @Size(max = 60, message = "A tag deve ter no máximo 60 caracteres")
+    @Size(max = 50, message = "A tag deve ter no máximo 50 caracteres")
     private String tag;
 
     public CreateTicketRequest() {
     }
 
     public CreateTicketRequest(String nome, String email, String titulo, String descricao) {
-        this(nome, email, titulo, descricao, null);
+        this.nome = nome;
+        this.email = email;
+        this.titulo = titulo;
+        this.descricao = descricao;
     }
 
     public CreateTicketRequest(String nome, String email, String titulo, String descricao, String tag) {
@@ -80,3 +83,4 @@ public class CreateTicketRequest {
         this.tag = tag;
     }
 }
+

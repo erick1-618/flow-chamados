@@ -146,4 +146,16 @@ export const api = {
     if (!res.ok) throw new Error('Erro ao configurar webhook do Trello.');
     return res.json();
   },
+
+  async deleteAdminTicket(adminKey: string, id: number): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/admin/tickets/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Key': adminKey },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(sanitizeErrorMessage(err?.message, `Erro ao excluir chamado #${id}.`));
+    }
+    return res.json();
+  },
 };

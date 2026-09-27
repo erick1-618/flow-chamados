@@ -48,16 +48,17 @@ public class TicketService {
     public Ticket createTicket(CreateTicketRequest request) {
         String protocolo = generateProtocol();
 
-        String tag = (request.getTag() != null && !request.getTag().isBlank()) ? request.getTag().trim() : "Geral";
-
         Ticket ticket = new Ticket(
                 protocolo,
                 request.getTitulo().trim(),
                 request.getDescricao().trim(),
                 request.getNome().trim(),
-                request.getEmail().trim().toLowerCase(),
-                tag
+                request.getEmail().trim().toLowerCase()
         );
+
+        if (request.getTag() != null && !request.getTag().isBlank()) {
+            ticket.setTag(request.getTag().trim());
+        }
 
         TrelloCardResult trelloResult = trelloService.createCard(
                 protocolo,
@@ -65,7 +66,7 @@ public class TicketService {
                 ticket.getSolicitanteNome(),
                 ticket.getSolicitanteEmail(),
                 ticket.getDescricao(),
-                tag
+                ticket.getTag()
         );
 
         ticket.setTrelloCardId(trelloResult.getCardId());
@@ -73,6 +74,7 @@ public class TicketService {
         ticket.setTrelloCardUrl(trelloResult.getCardUrl());
 
         return ticketRepository.save(ticket);
+
     }
 
     @Transactional(readOnly = true)
@@ -179,6 +181,41 @@ public class TicketService {
     public Ticket findById(Long id) {
         return ticketRepository.findByIdWithMessages(id)
                 .orElseThrow(() -> new NoSuchElementException("Chamado não encontrado com o ID: " + id));
+    }
+
+    @Transactional
+    public void deleteTicket(Long id) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Chamado não encontrado com o ID: " + id));
+
+        // Move o card correspondente no Trello para a coluna 'Excluido'
+        if (ticket.getTrelloCardId() != null) {
+            trelloService.moveCardToList(ticket.getTrelloCardId(), trelloService.getListExcluidoId());
+        }
+
+        ticketRepository.delete(ticket);
+        log.info("Chamado [{}] (ID: {}) e mensagens excluídos com sucesso", ticket.getProtocolo(), id);
+    }
+
+    @Transactional
+    public boolean deleteTicketByCard(String trelloCardId, String cardName) {
+        Optional<Ticket> ticketOpt = ticketRepository.findByTrelloCardId(trelloCardId);
+        if (ticketOpt.isEmpty() && cardName != null) {
+            Matcher matcher = PROTOCOL_PATTERN.matcher(cardName);
+            if (matcher.find()) {
+                String parsedProtocol = matcher.group(1);
+                ticketOpt = ticketRepository.findByProtocolo(parsedProtocol);
+            }
+        }
+
+        if (ticketOpt.isPresent()) {
+            Ticket ticket = ticketOpt.get();
+            ticketRepository.delete(ticket);
+            log.info("Chamado [{}] excluído do banco via webhook do Trello (movido para coluna Excluido)", ticket.getProtocolo());
+            return true;
+        }
+
+        return false;
     }
 
     private synchronized String generateProtocol() {

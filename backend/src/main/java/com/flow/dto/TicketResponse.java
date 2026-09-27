@@ -18,10 +18,10 @@ public class TicketResponse {
     private String solicitanteNome;
     private String solicitanteEmail;
     private TicketStatus status;
+    private String tag;
     private String trelloCardId;
     private String trelloListId;
     private String trelloCardUrl;
-    private String tag;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<MessageResponse> messages = new ArrayList<>();
@@ -37,10 +37,10 @@ public class TicketResponse {
         this.solicitanteNome = ticket.getSolicitanteNome();
         this.solicitanteEmail = ticket.getSolicitanteEmail();
         this.status = ticket.getStatus();
+        this.tag = ticket.getTag();
         this.trelloCardId = ticket.getTrelloCardId();
         this.trelloListId = ticket.getTrelloListId();
         this.trelloCardUrl = ticket.getTrelloCardUrl();
-        this.tag = ticket.getTag();
         this.createdAt = ticket.getCreatedAt();
         this.updatedAt = ticket.getUpdatedAt();
         if (ticket.getMessages() != null && Hibernate.isInitialized(ticket.getMessages())) {
@@ -49,6 +49,7 @@ public class TicketResponse {
                     .collect(Collectors.toList());
         }
     }
+
 
     public Long getId() {
         return id;
@@ -146,14 +147,6 @@ public class TicketResponse {
         this.updatedAt = updatedAt;
     }
 
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
     public List<MessageResponse> getMessages() {
         return messages;
     }
@@ -161,4 +154,13 @@ public class TicketResponse {
     public void setMessages(List<MessageResponse> messages) {
         this.messages = messages;
     }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
 }
+

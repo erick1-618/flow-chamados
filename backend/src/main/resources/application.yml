@@ -37,6 +37,7 @@ trello:
     em-andamento: ${TRELLO_LIST_EM_ANDAMENTO:list_id_em_andamento}
     aguardando-acao: ${TRELLO_LIST_AGUARDANDO_ACAO:list_id_aguardando_acao}
     finalizado: ${TRELLO_LIST_FINALIZADO:list_id_finalizado}
+    excluido: ${TRELLO_LIST_EXCLUIDO:6ab952308e7442f8e2e36533}
 
 # Seguranca e CORS
 app:

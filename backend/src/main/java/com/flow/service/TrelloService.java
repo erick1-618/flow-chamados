@@ -48,6 +48,9 @@ public class TrelloService {
     @Value("${trello.lists.finalizado:list_id_finalizado}")
     private String listFinalizadoId;
 
+    @Value("${trello.lists.excluido:6ab952308e7442f8e2e36533}")
+    private String listExcluidoId;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     public TrelloCardResult createCard(
@@ -68,14 +71,16 @@ public class TrelloService {
             String descricao,
             String tag
     ) {
-        String cardName = String.format("[%s] - %s", protocolo, titulo);
-        String tagDisplay = (tag != null && !tag.isBlank()) ? tag.trim() : "Geral";
+        String tagHeader = (tag != null && !tag.isBlank()) ? String.format("[%s] ", tag.trim()) : "";
+        String cardName = String.format("[%s] %s- %s", protocolo, tagHeader, titulo);
+        String tagLine = (tag != null && !tag.isBlank()) ? String.format("- **Departamento / Tag:** %s\n", tag.trim()) : "";
+
         String cardDesc = String.format(
                 "### Chamado %s\n\n" +
                 "- **Solicitante:** %s\n" +
                 "- **E-mail:** %s\n" +
                 "- **Protocolo:** `%s`\n" +
-                "- **Categoria / Tag:** `%s`\n" +
+                "%s" +
                 "- **Criado em:** %s\n\n" +
                 "---\n\n" +
                 "#### Descrição do Problema:\n%s\n",
@@ -83,7 +88,7 @@ public class TrelloService {
                 solicitanteNome,
                 solicitanteEmail,
                 protocolo,
-                tagDisplay,
+                tagLine,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                 descricao
         );
@@ -114,9 +119,8 @@ public class TrelloService {
                 String shortUrl = (String) bodyMap.get("shortUrl");
                 String cardUrl = shortUrl != null ? shortUrl : ("https://trello.com/c/" + cardId);
 
-                // Aplica a label/tag correspondente no card do Trello
                 if (tag != null && !tag.isBlank()) {
-                    addLabelToCard(cardId, tag);
+                    attachTagLabelToCard(cardId, tag.trim());
                 }
 
                 return new TrelloCardResult(cardId, listCriadoId, cardUrl);
@@ -129,32 +133,40 @@ public class TrelloService {
         return new TrelloCardResult(fallbackId, listCriadoId, "https://trello.com/c/" + fallbackId);
     }
 
-    public void addLabelToCard(String cardId, String tag) {
-        if (!isConfigured() || cardId == null || cardId.startsWith("mock_") || tag == null || tag.isBlank()) return;
+    private void attachTagLabelToCard(String cardId, String tag) {
         try {
-            String color = mapTagToTrelloColor(tag);
-            String url = String.format("%s/cards/%s/labels?key=%s&token=%s&name=%s&color=%s",
+            String color = getLabelColorForTag(tag);
+            String labelUrl = String.format(
+                    "%s/cards/%s/labels?key=%s&token=%s&name=%s&color=%s",
                     TRELLO_API_BASE, cardId, apiKey, token,
-                    java.net.URLEncoder.encode(tag.trim(), java.nio.charset.StandardCharsets.UTF_8),
-                    color);
-            restTemplate.postForEntity(url, null, Map.class);
-            log.info("Label '{}' (cor: {}) vinculada com sucesso ao card {}", tag, color, cardId);
+                    java.net.URLEncoder.encode(tag, java.nio.charset.StandardCharsets.UTF_8),
+                    color
+            );
+            restTemplate.postForEntity(labelUrl, null, Map.class);
         } catch (Exception ex) {
-            log.warn("Falha ao adicionar label '{}' ao card {}: {}", tag, cardId, ex.getMessage());
+            log.warn("Não foi possível anexar etiqueta de tag [{}] no Trello: {}", tag, ex.getMessage());
         }
     }
 
-    private String mapTagToTrelloColor(String tag) {
+    private String getLabelColorForTag(String tag) {
         if (tag == null) return "blue";
-        String lower = tag.toLowerCase();
-        if (lower.contains("ti") || lower.contains("sistema") || lower.contains("software")) return "blue";
-        if (lower.contains("financeiro") || lower.contains("fiscal") || lower.contains("faturamento")) return "green";
-        if (lower.contains("rh") || lower.contains("pessoal") || lower.contains("recursos humanos")) return "purple";
-        if (lower.contains("opera") || lower.contains("logística") || lower.contains("logistica")) return "orange";
-        if (lower.contains("infra") || lower.contains("rede") || lower.contains("hardware") || lower.contains("crítico")) return "red";
-        if (lower.contains("dúvida") || lower.contains("duvida") || lower.contains("geral")) return "yellow";
-        return "blue";
+        switch (tag.toLowerCase()) {
+            case "ti & sistemas":
+            case "ti":
+                return "blue";
+            case "infraestrutura":
+                return "orange";
+            case "acessos & contas":
+                return "purple";
+            case "financeiro":
+                return "green";
+            case "recursos humanos":
+                return "pink";
+            default:
+                return "sky";
+        }
     }
+
 
     public boolean setupWebhook() {
         if (!isConfigured()) return false;
@@ -215,6 +227,25 @@ public class TrelloService {
         if (listId.equals(listAguardandoAcaoId)) return Optional.of(TicketStatus.AGUARDANDO_ACAO);
         if (listId.equals(listFinalizadoId)) return Optional.of(TicketStatus.FINALIZADO);
         return Optional.empty();
+    }
+
+    public String getListExcluidoId() {
+        return listExcluidoId;
+    }
+
+    public boolean isExcluidoList(String listId) {
+        return listId != null && listId.equals(listExcluidoId);
+    }
+
+    public void moveCardToList(String cardId, String targetListId) {
+        if (!isConfigured() || cardId == null || cardId.startsWith("mock_") || targetListId == null) return;
+        try {
+            String url = String.format("%s/cards/%s?key=%s&token=%s&idList=%s", TRELLO_API_BASE, cardId, apiKey, token, targetListId);
+            restTemplate.put(url, null);
+            log.info("Card {} movido com sucesso para a lista {}", cardId, targetListId);
+        } catch (Exception ex) {
+            log.warn("Falha ao mover card {} para lista {}: {}", cardId, targetListId, ex.getMessage());
+        }
     }
 
     private boolean isConfigured() {
