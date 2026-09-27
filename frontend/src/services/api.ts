@@ -12,6 +12,24 @@ import type {
 const BASE_URL = import.meta.env.VITE_API_URL ? String(import.meta.env.VITE_API_URL).replace(/\/+$/, '') : '';
 const API_BASE = BASE_URL ? `${BASE_URL}/api` : '/api';
 
+function sanitizeErrorMessage(rawMessage: unknown, fallback: string): string {
+  if (typeof rawMessage !== 'string' || !rawMessage.trim()) return fallback;
+  // Oculta eventuais vazamentos de SQL, JDBC ou drivers
+  const lower = rawMessage.toLowerCase();
+  if (
+    lower.includes('jdbc') ||
+    lower.includes('sql') ||
+    lower.includes('hibernate') ||
+    lower.includes('bytea') ||
+    lower.includes('postgresql') ||
+    lower.includes('org.') ||
+    lower.includes('exception')
+  ) {
+    return 'Falha no processamento interno dos dados. Por favor, tente novamente em instantes.';
+  }
+  return rawMessage;
+}
+
 export const api = {
   async getHealth(): Promise<HealthCheckResponse> {
     const res = await fetch(`${API_BASE}/health`);
@@ -27,7 +45,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      throw new Error(err?.message || 'Erro ao abrir chamado.');
+      throw new Error(sanitizeErrorMessage(err?.message, 'Erro ao abrir chamado.'));
     }
     return res.json();
   },
@@ -40,7 +58,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      throw new Error(err?.message || 'Chamado não encontrado com o protocolo e e-mail informados.');
+      throw new Error(sanitizeErrorMessage(err?.message, 'Chamado não encontrado com o protocolo e e-mail informados.'));
     }
     return res.json();
   },
@@ -53,7 +71,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      throw new Error(err?.message || 'Erro ao enviar mensagem.');
+      throw new Error(sanitizeErrorMessage(err?.message, 'Erro ao enviar mensagem.'));
     }
     return res.json();
   },
@@ -71,7 +89,8 @@ export const api = {
     });
     if (!res.ok) {
       if (res.status === 401) throw new Error('Chave de acesso administrativo inválida.');
-      throw new Error(`Erro ao listar chamados: ${res.statusText}`);
+      const err = await res.json().catch(() => null);
+      throw new Error(sanitizeErrorMessage(err?.message, `Erro ao listar chamados: ${res.statusText}`));
     }
     return res.json();
   },
@@ -80,7 +99,10 @@ export const api = {
     const res = await fetch(`${API_BASE}/admin/tickets/${id}`, {
       headers: { 'X-Admin-Key': adminKey },
     });
-    if (!res.ok) throw new Error(`Erro ao buscar detalhes do chamado #${id}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(sanitizeErrorMessage(err?.message, `Erro ao buscar detalhes do chamado #${id}`));
+    }
     return res.json();
   },
 
@@ -95,7 +117,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      throw new Error(err?.message || 'Erro ao criar chamado administrativo.');
+      throw new Error(sanitizeErrorMessage(err?.message, 'Erro ao criar chamado administrativo.'));
     }
     return res.json();
   },
@@ -111,7 +133,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);
-      throw new Error(err?.message || 'Erro ao enviar resposta como administrador.');
+      throw new Error(sanitizeErrorMessage(err?.message, 'Erro ao enviar resposta como administrador.'));
     }
     return res.json();
   },
