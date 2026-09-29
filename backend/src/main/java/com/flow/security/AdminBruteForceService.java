@@ -43,7 +43,7 @@ public class AdminBruteForceService {
                 log.warn("Tentativa de acesso ao admin rejeitada: IP {} está bloqueado por mais {} min.", clientIp, minutesLeft);
                 throw new ResponseStatusException(
                         HttpStatus.TOO_MANY_REQUESTS,
-                        "Acesso administrativo bloqueado temporariamente por suspeita de força bruta. Tente novamente em " + minutesLeft + " minuto(s)."
+                        "Acesso administrativo bloqueado temporariamente. Tente novamente em " + minutesLeft + " minuto(s)."
                 );
             } else {
                 // Período de bloqueio encerrou
@@ -78,7 +78,7 @@ public class AdminBruteForceService {
 
             throw new ResponseStatusException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Múltiplas tentativas de autenticação inválidas detectadas. Seu IP foi bloqueado temporariamente por " + LOCK_DURATION.toMinutes() + " minutos."
+                    "Múltiplas tentativas inválidas detectadas. Tente novamente em" + LOCK_DURATION.toMinutes() + " minutos."
             );
         } else {
             int remaining = MAX_FAILED_ATTEMPTS - currentFailures;
