@@ -105,6 +105,14 @@ public class CreateTicketRequest {
     public void setDataCard(LocalDate dataCard) {
         this.dataCard = dataCard;
     }
+
+    public String getSolicitanteEmail() {
+        return email;
+    }
+
+    public String getSolicitanteNome() {
+        return nome;
+    }
 }
 
 

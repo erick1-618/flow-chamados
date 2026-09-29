@@ -30,7 +30,7 @@ public class TicketClientController {
             HttpServletRequest httpRequest
     ) {
         String clientIp = ClientIpResolver.getClientIp(httpRequest);
-        rateLimiterService.checkTicketCreationRateLimit(clientIp, request.getSolicitanteEmail());
+        rateLimiterService.checkTicketCreationRateLimit(clientIp, request.getEmail());
 
         Ticket ticket = ticketService.createTicket(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new TicketResponse(ticket));
