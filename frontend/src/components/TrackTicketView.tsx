@@ -185,7 +185,6 @@ export const TrackTicketView = ({
             <div>
               <div className="ticket-protocol-row">
                 <span className="protocol-chip">{ticketAtual.protocolo}</span>
-                <StatusBadge status={ticketAtual.status} size="sm" />
               </div>
               <h3 className="ticket-title-large">{ticketAtual.titulo}</h3>
               <p className="ticket-author-info">
