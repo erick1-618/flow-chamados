@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Ticket } from '../types/ticket';
 import { api } from '../services/api';
-import { StatusBadge } from './StatusBadge';
 import { IconSearch, IconSend, IconRefresh } from './Icons';
 import { formatTagName } from './TagBadge';
 
