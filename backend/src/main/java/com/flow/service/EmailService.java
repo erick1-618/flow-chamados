@@ -56,12 +56,13 @@ public class EmailService {
                     ? frontendUrl.replaceAll("/+$", "")
                     : "https://flow.erickborba.dev.br";
 
-            String directTrackingUrl = String.format(
-                    "%s/?tab=acompanhar&protocolo=%s&email=%s",
-                    baseFrontend,
-                    URLEncoder.encode(ticket.getProtocolo(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(ticket.getSolicitanteEmail().trim().toLowerCase(), StandardCharsets.UTF_8)
-            );
+            String directTrackingUrl = new StringBuilder(128)
+                    .append(baseFrontend)
+                    .append("/?tab=acompanhar&protocolo=")
+                    .append(URLEncoder.encode(ticket.getProtocolo(), StandardCharsets.UTF_8))
+                    .append("&email=")
+                    .append(URLEncoder.encode(ticket.getSolicitanteEmail().trim().toLowerCase(), StandardCharsets.UTF_8))
+                    .toString();
 
             String statusTitle;
             String statusBadgeColor;
@@ -73,22 +74,38 @@ public class EmailService {
                 statusTitle = "Aguardando ação";
                 statusBadgeColor = "#f59e0b"; // âmbar / amarelo de atenção
                 subject = String.format("[Flow Chamados] Ação necessária no chamado [%s] - %s", ticket.getProtocolo(), ticket.getTitulo());
-                mensagemHtml = "Seu chamado <strong>[" + escapeHtml(ticket.getProtocolo()) + "] " + escapeHtml(ticket.getTitulo()) +
-                        "</strong> foi atualizado para <strong>Aguardando ação</strong>.<br><br>" +
-                        "Nossa equipe necessita de informações adicionais ou de uma confirmação sua para continuar o atendimento.";
-                mensagemTxt = "Seu chamado [" + ticket.getProtocolo() + "] " + ticket.getTitulo() +
-                        " foi atualizado para o status: Aguardando ação.\n\n" +
-                        "Nossa equipe necessita de informações adicionais ou de uma confirmação sua para continuar o atendimento.";
+
+                mensagemHtml = new StringBuilder(256)
+                        .append("Seu chamado <strong>[").append(escapeHtml(ticket.getProtocolo()))
+                        .append("] ").append(escapeHtml(ticket.getTitulo()))
+                        .append("</strong> foi atualizado para <strong>Aguardando ação</strong>.<br><br>")
+                        .append("Nossa equipe necessita de informações adicionais ou de uma confirmação sua para continuar o atendimento.")
+                        .toString();
+
+                mensagemTxt = new StringBuilder(256)
+                        .append("Seu chamado [").append(ticket.getProtocolo())
+                        .append("] ").append(ticket.getTitulo())
+                        .append(" foi atualizado para o status: Aguardando ação.\n\n")
+                        .append("Nossa equipe necessita de informações adicionais ou de uma confirmação sua para continuar o atendimento.")
+                        .toString();
             } else {
                 statusTitle = "Finalizado";
                 statusBadgeColor = "#10b981"; // verde de sucesso
                 subject = String.format("[Flow Chamados] Chamado concluído [%s] - %s", ticket.getProtocolo(), ticket.getTitulo());
-                mensagemHtml = "Seu chamado <strong>[" + escapeHtml(ticket.getProtocolo()) + "] " + escapeHtml(ticket.getTitulo()) +
-                        "</strong> foi concluído com sucesso e marcado como <strong>Finalizado</strong>.<br><br>" +
-                        "Agradecemos o contato. Caso queira consultar o histórico do chamado, acesse o link abaixo.";
-                mensagemTxt = "Seu chamado [" + ticket.getProtocolo() + "] " + ticket.getTitulo() +
-                        " foi concluído com sucesso e marcado como Finalizado.\n\n" +
-                        "Agradecemos o contato. Caso queira consultar o histórico do chamado, acesse o link abaixo.";
+
+                mensagemHtml = new StringBuilder(256)
+                        .append("Seu chamado <strong>[").append(escapeHtml(ticket.getProtocolo()))
+                        .append("] ").append(escapeHtml(ticket.getTitulo()))
+                        .append("</strong> foi concluído com sucesso e marcado como <strong>Finalizado</strong>.<br><br>")
+                        .append("Agradecemos o contato. Caso queira consultar o histórico do chamado, acesse o link abaixo.")
+                        .toString();
+
+                mensagemTxt = new StringBuilder(256)
+                        .append("Seu chamado [").append(ticket.getProtocolo())
+                        .append("] ").append(ticket.getTitulo())
+                        .append(" foi concluído com sucesso e marcado como Finalizado.\n\n")
+                        .append("Agradecemos o contato. Caso queira consultar o histórico do chamado, acesse o link abaixo.")
+                        .toString();
             }
 
             MimeMessage message = mailSender.createMimeMessage();
@@ -131,55 +148,62 @@ public class EmailService {
             String mensagemHtml,
             String directTrackingUrl
     ) {
-        return "<!DOCTYPE html>\n" +
-                "<html lang=\"pt-BR\">\n" +
-                "<head>\n" +
-                "  <meta charset=\"UTF-8\">\n" +
-                "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
-                "  <title>Flow Chamados</title>\n" +
-                "</head>\n" +
-                "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #334155;\">\n" +
-                "  <table align=\"center\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width: 580px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05);\">\n" +
-                "    <tr>\n" +
-                "      <td style=\"padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;\">\n" +
-                "        <span style=\"font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.5px;\">FLOW <span style=\"color: #2563eb;\">CHAMADOS</span></span>\n" +
-                "      </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "      <td style=\"padding: 32px;\">\n" +
-                "        <div style=\"margin-bottom: 20px;\">\n" +
-                "          <span style=\"display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; color: #ffffff; background-color: " + statusBadgeColor + ";\">\n" +
-                "            " + escapeHtml(statusTitle) + "\n" +
-                "          </span>\n" +
-                "        </div>\n" +
-                "        <p style=\"margin: 0 0 16px; font-size: 15px; line-height: 1.5;\">Olá, <strong>" + escapeHtml(solicitanteNome) + "</strong>,</p>\n" +
-                "        <div style=\"margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;\">\n" +
-                "          " + mensagemHtml + "\n" +
-                "        </div>\n" +
-                "        <div style=\"text-align: center; margin: 28px 0;\">\n" +
-                "          <a href=\"" + directTrackingUrl + "\" style=\"display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 14px; font-weight: 600; letter-spacing: 0.2px;\">\n" +
-                "            Acessar Meu Chamado Diretamente\n" +
-                "          </a>\n" +
-                "        </div>\n" +
-                "        <p style=\"margin: 20px 0 0; font-size: 12px; color: #64748b; line-height: 1.5;\">\n" +
-                "          Ou acesse diretamente através do link:<br>\n" +
-                "          <a href=\"" + directTrackingUrl + "\" style=\"color: #2563eb; word-break: break-all; font-size: 12px;\">" + directTrackingUrl + "</a>\n" +
-                "        </p>\n" +
-                "      </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "      <td style=\"padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; line-height: 1.5;\">\n" +
-                "        <p style=\"margin: 0 0 6px; font-weight: 600; color: #dc2626;\">\n" +
-                "          ⚠️ Atenção: Não responda a este e-mail.\n" +
-                "        </p>\n" +
-                "        <p style=\"margin: 0;\">\n" +
-                "          Este é um e-mail automático do sistema Flow Chamados. Mensagens enviadas para este endereço são descartadas. Para responder ou interagir no chamado, utilize o link de acesso direto acima.\n" +
-                "        </p>\n" +
-                "      </td>\n" +
-                "    </tr>\n" +
-                "  </table>\n" +
-                "</body>\n" +
-                "</html>";
+        StringBuilder sb = new StringBuilder(2048);
+        sb.append("<!DOCTYPE html>\n")
+          .append("<html lang=\"pt-BR\">\n")
+          .append("<head>\n")
+          .append("  <meta charset=\"UTF-8\">\n")
+          .append("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n")
+          .append("  <title>Flow Chamados</title>\n")
+          .append("</head>\n")
+          .append("<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #334155;\">\n")
+          .append("  <table align=\"center\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width: 580px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05);\">\n")
+          .append("    <tr>\n")
+          .append("      <td style=\"padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;\">\n")
+          .append("        <span style=\"font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.5px;\">FLOW <span style=\"color: #2563eb;\">CHAMADOS</span></span>\n")
+          .append("      </td>\n")
+          .append("    </tr>\n")
+          .append("    <tr>\n")
+          .append("      <td style=\"padding: 32px;\">\n")
+          .append("        <div style=\"margin-bottom: 20px;\">\n")
+          .append("          <span style=\"display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; color: #ffffff; background-color: ")
+          .append(statusBadgeColor)
+          .append(";\">\n")
+          .append("            ")
+          .append(escapeHtml(statusTitle))
+          .append("\n          </span>\n")
+          .append("        </div>\n")
+          .append("        <p style=\"margin: 0 0 16px; font-size: 15px; line-height: 1.5;\">Olá, <strong>")
+          .append(escapeHtml(solicitanteNome))
+          .append("</strong>,</p>\n")
+          .append("        <div style=\"margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;\">\n")
+          .append("          ")
+          .append(mensagemHtml)
+          .append("\n        </div>\n")
+          .append("        <div style=\"text-align: center; margin: 28px 0;\">\n")
+          .append("          <a href=\"")
+          .append(directTrackingUrl)
+          .append("\" style=\"display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 14px; font-weight: 600; letter-spacing: 0.2px;\">\n")
+          .append("            Acessar Meu Chamado\n")
+          .append("          </a>\n")
+          .append("        </div>\n")
+          .append("      </td>\n")
+          .append("    </tr>\n")
+          .append("    <tr>\n")
+          .append("      <td style=\"padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; line-height: 1.5;\">\n")
+          .append("        <p style=\"margin: 0 0 6px; font-weight: 600; color: #dc2626;\">\n")
+          .append("          ⚠️ Atenção: Não responda a este e-mail.\n")
+          .append("        </p>\n")
+          .append("        <p style=\"margin: 0;\">\n")
+          .append("          Este é um e-mail automático do sistema Flow Chamados. Mensagens enviadas para este endereço são descartadas. Para responder ou interagir no chamado, utilize o link de acesso direto acima.\n")
+          .append("        </p>\n")
+          .append("      </td>\n")
+          .append("    </tr>\n")
+          .append("  </table>\n")
+          .append("</body>\n")
+          .append("</html>");
+
+        return sb.toString();
     }
 
     private String buildTextTemplate(
@@ -187,15 +211,18 @@ public class EmailService {
             String mensagemTxt,
             String directTrackingUrl
     ) {
-        return "Olá, " + solicitanteNome + ",\n\n" +
-                mensagemTxt + "\n\n" +
-                "Acesse seu chamado diretamente sem precisar preencher dados no link abaixo:\n" +
-                directTrackingUrl + "\n\n" +
-                "--------------------------------------------------\n" +
-                "ATENÇÃO: NÃO RESPONDA A ESTE E-MAIL.\n" +
-                "Este é um e-mail automático do sistema Flow Chamados. Mensagens enviadas para este endereço são descartadas.\n" +
-                "Para interagir no chamado, utilize o link acima.\n" +
-                "--------------------------------------------------\n";
+        StringBuilder sb = new StringBuilder(512);
+        sb.append("Olá, ").append(solicitanteNome).append(",\n\n")
+          .append(mensagemTxt).append("\n\n")
+          .append("Acesse seu chamado diretamente sem precisar preencher dados no link abaixo:\n")
+          .append(directTrackingUrl).append("\n\n")
+          .append("--------------------------------------------------\n")
+          .append("ATENÇÃO: NÃO RESPONDA A ESTE E-MAIL.\n")
+          .append("Este é um e-mail automático do sistema Flow Chamados. Mensagens enviadas para este endereço são descartadas.\n")
+          .append("Para interagir no chamado, utilize o link acima.\n")
+          .append("--------------------------------------------------\n");
+
+        return sb.toString();
     }
 
     private String escapeHtml(String input) {

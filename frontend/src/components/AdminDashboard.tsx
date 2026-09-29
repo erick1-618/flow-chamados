@@ -268,7 +268,7 @@ export const AdminDashboard = ({
             </div>
             <h2 className="card-title">Acesso Restrito</h2>
             <p className="card-subtitle">
-              Insira a chave de segurança administrativa para gerenciar a fila de suporte técnico.
+              Insira a chave de segurança para acessar o painel administrativo.
             </p>
           </div>
 
