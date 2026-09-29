@@ -17,6 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.flow.security.AdminBruteForceService;
+import com.flow.security.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -28,18 +32,32 @@ public class TicketAdminController {
 
     private final TicketService ticketService;
     private final TrelloService trelloService;
+    private final AdminBruteForceService adminBruteForceService;
+    private final HttpServletRequest request;
 
     @Value("${app.admin-api-key:flow-admin-secret-2026}")
     private String expectedAdminKey;
 
-    public TicketAdminController(TicketService ticketService, TrelloService trelloService) {
+    public TicketAdminController(
+            TicketService ticketService,
+            TrelloService trelloService,
+            AdminBruteForceService adminBruteForceService,
+            HttpServletRequest request
+    ) {
         this.ticketService = ticketService;
         this.trelloService = trelloService;
+        this.adminBruteForceService = adminBruteForceService;
+        this.request = request;
     }
 
     private void checkAdminAuth(String providedKey) {
+        String clientIp = ClientIpResolver.getClientIp(request);
+        adminBruteForceService.checkIpBlocked(clientIp);
+
         if (providedKey == null || !providedKey.equals(expectedAdminKey)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Chave de acesso de administrador inválida.");
+            adminBruteForceService.recordFailedAttempt(clientIp);
+        } else {
+            adminBruteForceService.recordSuccessfulAttempt(clientIp);
         }
     }
 

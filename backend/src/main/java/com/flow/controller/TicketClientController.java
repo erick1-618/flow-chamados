@@ -4,6 +4,9 @@ import com.flow.dto.*;
 import com.flow.model.Message;
 import com.flow.model.Ticket;
 import com.flow.service.TicketService;
+import com.flow.security.ClientIpResolver;
+import com.flow.security.RateLimiterService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,13 +17,21 @@ import org.springframework.web.bind.annotation.*;
 public class TicketClientController {
 
     private final TicketService ticketService;
+    private final RateLimiterService rateLimiterService;
 
-    public TicketClientController(TicketService ticketService) {
+    public TicketClientController(TicketService ticketService, RateLimiterService rateLimiterService) {
         this.ticketService = ticketService;
+        this.rateLimiterService = rateLimiterService;
     }
 
     @PostMapping
-    public ResponseEntity<TicketResponse> createTicket(@Valid @RequestBody CreateTicketRequest request) {
+    public ResponseEntity<TicketResponse> createTicket(
+            @Valid @RequestBody CreateTicketRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String clientIp = ClientIpResolver.getClientIp(httpRequest);
+        rateLimiterService.checkTicketCreationRateLimit(clientIp, request.getSolicitanteEmail());
+
         Ticket ticket = ticketService.createTicket(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new TicketResponse(ticket));
     }
