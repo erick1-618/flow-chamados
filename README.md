@@ -29,3 +29,6 @@ O **Flow Chamados** é um sistema corporativo para abertura, gestão e acompanha
 - Comentários adicionados no cartão do Trello por atendentes são espelhados na thread do chamado no sistema.
 - Se um cartão for movido para a coluna `Excluído` no Trello, o chamado e suas mensagens são excluídos do sistema.
 - Cada cartão no Trello possui um link direto que leva o atendente diretamente para a conversa com o cliente no painel administrativo.
+
+### 5. Envio de emails
+- Além de atualizar status de atividade de um chamado, a ação de mover dispara emails para o usuário em movimentaçõs importantes, no caso "Aguardando ação" e "Finalizado"
