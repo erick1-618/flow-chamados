@@ -33,15 +33,18 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final MessageRepository messageRepository;
     private final TrelloService trelloService;
+    private final EmailService emailService;
 
     public TicketService(
             TicketRepository ticketRepository,
             MessageRepository messageRepository,
-            TrelloService trelloService
+            TrelloService trelloService,
+            EmailService emailService
     ) {
         this.ticketRepository = ticketRepository;
         this.messageRepository = messageRepository;
         this.trelloService = trelloService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -155,6 +158,11 @@ public class TicketService {
         ticket.setTrelloListId(listAfterId);
         ticket.setUpdatedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
+
+        if (targetStatus == TicketStatus.AGUARDANDO_ACAO || targetStatus == TicketStatus.FINALIZADO) {
+            emailService.sendStatusUpdateEmail(ticket, targetStatus);
+        }
+
         return true;
     }
 

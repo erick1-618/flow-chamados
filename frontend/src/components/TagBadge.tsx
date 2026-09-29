@@ -5,19 +5,35 @@ export interface CorporateTag {
 }
 
 export const CORPORATE_TAGS: CorporateTag[] = [
-  { id: 'academico', name: 'academico', color: 'purple' },
-  { id: 'pessoal', name: 'pessoal', color: 'green' },
-  { id: 'comunidade', name: 'comunidade', color: 'orange' },
-  { id: 'suporte-ti', name: 'suporte-ti', color: 'blue' },
+  { id: 'academico', name: 'Acadêmico', color: 'purple' },
+  { id: 'pessoal', name: 'Pessoal', color: 'green' },
+  { id: 'comunidade', name: 'Comunidade', color: 'orange' },
+  { id: 'suporte-ti', name: 'Suporte TI', color: 'blue' },
 ];
+
+export const formatTagName = (tag?: string): string => {
+  if (!tag) return '';
+  const normalized = tag.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const match = CORPORATE_TAGS.find((t) => {
+    const normName = t.name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return normName === normalized || t.id.toLowerCase() === normalized;
+  });
+  return match ? match.name : tag;
+};
 
 export const TagBadge = ({ tag, size = 'md' }: { tag?: string; size?: 'sm' | 'md' }) => {
   if (!tag) return null;
-  const match = CORPORATE_TAGS.find((t) => t.name.toLowerCase() === tag.toLowerCase());
+  const normalized = tag.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const match = CORPORATE_TAGS.find((t) => {
+    const normName = t.name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return normName === normalized || t.id.toLowerCase() === normalized;
+  });
   const colorClass = match ? `tag-class-${match.id}` : 'tag-class-default';
+  const label = match ? match.name : tag;
+
   return (
     <span className={`corporate-tag-badge ${colorClass} ${size === 'sm' ? 'tag-badge-sm' : ''}`}>
-      <span className="tag-label">{tag}</span>
+      <span className="tag-label">{label}</span>
     </span>
   );
 };

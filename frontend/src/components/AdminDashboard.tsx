@@ -56,7 +56,7 @@ export const AdminDashboard = ({
   const [manualEmail, setManualEmail] = useState('');
   const [manualTitulo, setManualTitulo] = useState('');
   const [manualDescricao, setManualDescricao] = useState('');
-  const [manualTag, setManualTag] = useState<string>('suporte-ti');
+  const [manualTag, setManualTag] = useState<string>('Suporte TI');
   const [manualComplexidade, setManualComplexidade] = useState<string>('Baixa');
   const [manualDataCard, setManualDataCard] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [salvandoManual, setSalvandoManual] = useState(false);
@@ -160,7 +160,7 @@ export const AdminDashboard = ({
       setManualEmail('');
       setManualTitulo('');
       setManualDescricao('');
-      setManualTag('suporte-ti');
+      setManualTag('Suporte TI');
       setManualComplexidade('Baixa');
       addToast(`Chamado manual ${created.protocolo} criado e sincronizado no Trello!`, 'success');
       onReloadTickets();

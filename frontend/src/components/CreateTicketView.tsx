@@ -19,7 +19,7 @@ export const CreateTicketView = ({
   const [email, setEmail] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string>('academico');
+  const [selectedTag, setSelectedTag] = useState<string>('Acadêmico');
   const [selectedComplexidade, setSelectedComplexidade] = useState<string>('Baixa');
   const [dataCard, setDataCard] = useState<string>(() => {
     const today = new Date();

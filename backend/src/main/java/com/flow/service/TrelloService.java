@@ -242,9 +242,10 @@ public class TrelloService {
 
     private String getLabelColorForTag(String tag) {
         if (tag == null) return "blue";
-        switch (tag.trim().toLowerCase()) {
+        String normalized = java.text.Normalizer.normalize(tag.trim().toLowerCase(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        switch (normalized) {
             case "academico":
-            case "acadêmico":
                 return "purple";
             case "pessoal":
                 return "green";

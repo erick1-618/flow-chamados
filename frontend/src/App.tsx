@@ -56,10 +56,23 @@ export function App() {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab');
     const ticketParam = params.get('ticket');
+    const protocoloParam = params.get('protocolo');
+    const emailParam = params.get('email');
 
     if (ticketParam) {
       setTargetTicketProto(ticketParam);
       setActiveTab('admin');
+    } else if (protocoloParam && emailParam) {
+      const cleanProto = protocoloParam.trim().toUpperCase();
+      const cleanEmail = emailParam.trim().toLowerCase();
+      setTrackProtocolo(cleanProto);
+      setTrackEmail(cleanEmail);
+      setActiveTab('acompanhar');
+      api.trackTicket({ protocolo: cleanProto, email: cleanEmail })
+        .then(setTicketAtual)
+        .catch(() => {
+          addToast('Não foi possível carregar o chamado pelo link informado.', 'error');
+        });
     } else if (tabParam === 'admin' || tabParam === 'acompanhar' || tabParam === 'abrir') {
       setActiveTab(tabParam);
     }

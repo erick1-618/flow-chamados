@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Ticket } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
 import { IconSearch, IconSend, IconRefresh } from './Icons';
+import { formatTagName } from './TagBadge';
 
 
 interface TrackTicketViewProps {
@@ -24,6 +25,14 @@ export const TrackTicketView = ({
   const [email, setEmail] = useState(initialEmail);
   const [loadingBusca, setLoadingBusca] = useState(false);
   const [erroBusca, setErroBusca] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialProtocolo) setProtocolo(initialProtocolo);
+  }, [initialProtocolo]);
+
+  useEffect(() => {
+    if (initialEmail) setEmail(initialEmail);
+  }, [initialEmail]);
 
   const [novaMensagem, setNovaMensagem] = useState('');
   const [enviandoMensagem, setEnviandoMensagem] = useState(false);
@@ -185,7 +194,7 @@ export const TrackTicketView = ({
                   ticketAtual.dataCard
                     ? `Data de entrega: ${new Date(ticketAtual.dataCard + 'T00:00:00').toLocaleDateString('pt-BR')}`
                     : null,
-                  ticketAtual.tag,
+                  formatTagName(ticketAtual.tag),
                   ticketAtual.complexidade,
                 ]
                   .filter(Boolean)

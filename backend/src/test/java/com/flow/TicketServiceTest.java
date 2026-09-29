@@ -8,6 +8,7 @@ import com.flow.model.Ticket;
 import com.flow.model.TicketStatus;
 import com.flow.repository.MessageRepository;
 import com.flow.repository.TicketRepository;
+import com.flow.service.EmailService;
 import com.flow.service.TicketService;
 import com.flow.service.TrelloCardResult;
 import com.flow.service.TrelloService;
@@ -36,11 +37,14 @@ class TicketServiceTest {
     @Mock
     private TrelloService trelloService;
 
+    @Mock
+    private EmailService emailService;
+
     private TicketService ticketService;
 
     @BeforeEach
     void setUp() {
-        ticketService = new TicketService(ticketRepository, messageRepository, trelloService);
+        ticketService = new TicketService(ticketRepository, messageRepository, trelloService, emailService);
     }
 
     @Test
@@ -70,7 +74,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("Deve sincronizar status via Webhook do Trello com idempotência")
+    @DisplayName("Deve sincronizar status via Webhook do Trello com idempotência sem disparar e-mail desnecessário")
     void testSyncStatusFromTrello() {
         Ticket existingTicket = new Ticket("FLOW-1042", "Teste", "Desc", "Nome", "email@teste.com");
         existingTicket.setStatus(TicketStatus.CRIADO);
@@ -83,6 +87,41 @@ class TicketServiceTest {
         boolean updated = ticketService.syncStatusFromTrello("trello_card_999", "[FLOW-1042] - Teste", "list_em_andamento");
         assertTrue(updated);
         assertEquals(TicketStatus.EM_ANDAMENTO, existingTicket.getStatus());
+        verify(emailService, never()).sendStatusUpdateEmail(any(), any());
+    }
+
+    @Test
+    @DisplayName("Deve disparar e-mail ao mover para Aguardando ação")
+    void testSyncStatusFromTrello_SendsEmailWhenAguardandoAcao() {
+        Ticket existingTicket = new Ticket("FLOW-1042", "Teste", "Desc", "Nome", "email@teste.com");
+        existingTicket.setStatus(TicketStatus.EM_ANDAMENTO);
+        existingTicket.setTrelloCardId("trello_card_999");
+
+        when(trelloService.mapListIdToStatus("list_aguardando")).thenReturn(Optional.of(TicketStatus.AGUARDANDO_ACAO));
+        when(ticketRepository.findByTrelloCardId("trello_card_999")).thenReturn(Optional.of(existingTicket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+
+        boolean updated = ticketService.syncStatusFromTrello("trello_card_999", "[FLOW-1042] - Teste", "list_aguardando");
+        assertTrue(updated);
+        assertEquals(TicketStatus.AGUARDANDO_ACAO, existingTicket.getStatus());
+        verify(emailService, times(1)).sendStatusUpdateEmail(existingTicket, TicketStatus.AGUARDANDO_ACAO);
+    }
+
+    @Test
+    @DisplayName("Deve disparar e-mail ao mover para Finalizado")
+    void testSyncStatusFromTrello_SendsEmailWhenFinalizado() {
+        Ticket existingTicket = new Ticket("FLOW-1042", "Teste", "Desc", "Nome", "email@teste.com");
+        existingTicket.setStatus(TicketStatus.EM_ANDAMENTO);
+        existingTicket.setTrelloCardId("trello_card_999");
+
+        when(trelloService.mapListIdToStatus("list_finalizado")).thenReturn(Optional.of(TicketStatus.FINALIZADO));
+        when(ticketRepository.findByTrelloCardId("trello_card_999")).thenReturn(Optional.of(existingTicket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+
+        boolean updated = ticketService.syncStatusFromTrello("trello_card_999", "[FLOW-1042] - Teste", "list_finalizado");
+        assertTrue(updated);
+        assertEquals(TicketStatus.FINALIZADO, existingTicket.getStatus());
+        verify(emailService, times(1)).sendStatusUpdateEmail(existingTicket, TicketStatus.FINALIZADO);
     }
 
     @Test

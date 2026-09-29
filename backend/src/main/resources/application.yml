@@ -25,6 +25,19 @@ spring:
         format_sql: true
     open-in-view: true
 
+  mail:
+    host: ${MAIL_HOST:smtp.resend.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:resend}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 # Configuracoes de integracao com o Trello
 trello:
   enabled: ${TRELLO_ENABLED:true}
@@ -43,6 +56,8 @@ trello:
 app:
   admin-api-key: ${ADMIN_API_KEY:flow-admin-secret-2026}
   frontend-url: ${FRONTEND_URL:https://flow.erickborba.dev.br}
+  mail:
+    from: ${MAIL_FROM:Flow Chamados <nao-responda@erickborba.dev.br>}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,https://*.vercel.app,https://*.erickborba.dev.br}
 
