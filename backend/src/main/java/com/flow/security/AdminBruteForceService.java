@@ -78,7 +78,7 @@ public class AdminBruteForceService {
 
             throw new ResponseStatusException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Múltiplas tentativas inválidas detectadas. Tente novamente em" + LOCK_DURATION.toMinutes() + " minutos."
+                    "Múltiplas tentativas inválidas detectadas. Tente novamente em " + LOCK_DURATION.toMinutes() + " minutos."
             );
         } else {
             int remaining = MAX_FAILED_ATTEMPTS - currentFailures;
