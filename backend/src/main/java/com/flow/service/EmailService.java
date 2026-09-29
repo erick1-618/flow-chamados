@@ -73,7 +73,7 @@ public class EmailService {
             if (newStatus == TicketStatus.AGUARDANDO_ACAO) {
                 statusTitle = "Aguardando ação";
                 statusBadgeColor = "#f59e0b"; // âmbar / amarelo de atenção
-                subject = String.format("[Flow Chamados] Ação necessária no chamado [%s] - %s", ticket.getProtocolo(), ticket.getTitulo());
+                subject = String.format("[Flow Chamados] Aguardando ação no chamado [%s]", ticket.getProtocolo());
 
                 mensagemHtml = new StringBuilder(256)
                         .append("Seu chamado <strong>[").append(escapeHtml(ticket.getProtocolo()))
@@ -91,7 +91,7 @@ public class EmailService {
             } else {
                 statusTitle = "Finalizado";
                 statusBadgeColor = "#10b981"; // verde de sucesso
-                subject = String.format("[Flow Chamados] Chamado concluído [%s] - %s", ticket.getProtocolo(), ticket.getTitulo());
+                subject = String.format("[Flow Chamados] Chamado concluído [%s]", ticket.getProtocolo());
 
                 mensagemHtml = new StringBuilder(256)
                         .append("Seu chamado <strong>[").append(escapeHtml(ticket.getProtocolo()))
