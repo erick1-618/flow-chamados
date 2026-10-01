@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { CreateTicketInput, Ticket } from '../types/ticket';
 import { api } from '../services/api';
 import { IconCheck, IconCopy, IconSend } from './Icons';
 import { CORPORATE_TAGS, TagBadge, COMPLEXITY_OPTIONS, ComplexityBadge } from './TagBadge';
+
+const getTodayLocalDateString = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 interface CreateTicketViewProps {
   onTicketCreated: (ticket: Ticket) => void;
@@ -21,14 +29,20 @@ export const CreateTicketView = ({
   const [descricao, setDescricao] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('Acadêmico');
   const [selectedComplexidade, setSelectedComplexidade] = useState<string>('Baixa');
-  const [dataCard, setDataCard] = useState<string>(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [dataCard, setDataCard] = useState<string>(() => getTodayLocalDateString());
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ticketRecente, setTicketRecente] = useState<Ticket | null>(null);
   const [copiado, setCopiado] = useState(false);
+
+  const descricaoRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (descricaoRef.current) {
+      descricaoRef.current.style.height = 'auto';
+      descricaoRef.current.style.height = `${Math.max(descricaoRef.current.scrollHeight, 110)}px`;
+    }
+  }, [descricao]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +89,10 @@ export const CreateTicketView = ({
     }
     if (!dataCard) {
       setErro('A data do chamado é obrigatória.');
+      return;
+    }
+    if (dataCard < getTodayLocalDateString()) {
+      setErro('A data de entrega não pode ser anterior à data de hoje.');
       return;
     }
 
@@ -242,8 +260,17 @@ export const CreateTicketView = ({
                   id="input-data-card"
                   type="date"
                   required
+                  min={getTodayLocalDateString()}
                   value={dataCard}
-                  onChange={(e) => setDataCard(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDataCard(val);
+                    if (val && val < getTodayLocalDateString()) {
+                      setErro('A data de entrega não pode ser anterior à data de hoje.');
+                    } else if (erro === 'A data de entrega não pode ser anterior à data de hoje.') {
+                      setErro(null);
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -301,6 +328,7 @@ export const CreateTicketView = ({
               </div>
               <textarea
                 id="input-descricao"
+                ref={descricaoRef}
                 rows={4}
                 required
                 minLength={10}

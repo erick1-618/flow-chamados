@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { CreateTicketInput, Ticket, TicketStatus } from '../types/ticket';
 import { api } from '../services/api';
 import { StatusBadge } from './StatusBadge';
@@ -13,6 +13,14 @@ import {
   IconShield,
   IconTrash,
 } from './Icons';
+
+const getTodayLocalDateString = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 
 interface AdminDashboardProps {
@@ -58,8 +66,17 @@ export const AdminDashboard = ({
   const [manualDescricao, setManualDescricao] = useState('');
   const [manualTag, setManualTag] = useState<string>('Suporte TI');
   const [manualComplexidade, setManualComplexidade] = useState<string>('Baixa');
-  const [manualDataCard, setManualDataCard] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [manualDataCard, setManualDataCard] = useState<string>(() => getTodayLocalDateString());
   const [salvandoManual, setSalvandoManual] = useState(false);
+
+  const manualDescricaoRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (manualDescricaoRef.current) {
+      manualDescricaoRef.current.style.height = 'auto';
+      manualDescricaoRef.current.style.height = `${Math.max(manualDescricaoRef.current.scrollHeight, 100)}px`;
+    }
+  }, [manualDescricao]);
 
   // Autenticação simples com a chave corporativa
   const handleLogin = async (e: React.FormEvent) => {
@@ -142,6 +159,11 @@ export const AdminDashboard = ({
   const handleCreateManual = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualNome.trim() || !manualEmail.trim() || !manualTitulo.trim() || !manualDescricao.trim()) return;
+
+    if (manualDataCard && manualDataCard < getTodayLocalDateString()) {
+      addToast('A data de entrega não pode ser anterior à data de hoje.', 'error');
+      return;
+    }
 
     setSalvandoManual(true);
     try {
@@ -743,6 +765,7 @@ export const AdminDashboard = ({
               <div className="form-field">
                 <label>Descrição Detalhada <span className="req">*</span></label>
                 <textarea
+                  ref={manualDescricaoRef}
                   rows={4}
                   required
                   placeholder="Instruções ou informações do chamado"
@@ -788,6 +811,7 @@ export const AdminDashboard = ({
                 <input
                   type="date"
                   required
+                  min={getTodayLocalDateString()}
                   value={manualDataCard}
                   onChange={(e) => setManualDataCard(e.target.value)}
                 />

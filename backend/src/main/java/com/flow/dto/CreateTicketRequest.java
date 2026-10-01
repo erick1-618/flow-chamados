@@ -1,6 +1,7 @@
 package com.flow.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class CreateTicketRequest {
     @Size(max = 30, message = "A complexidade deve ter no máximo 30 caracteres")
     private String complexidade;
 
+    @FutureOrPresent(message = "A data de entrega não pode ser anterior à data de hoje")
     private LocalDate dataCard;
 
     public CreateTicketRequest() {
