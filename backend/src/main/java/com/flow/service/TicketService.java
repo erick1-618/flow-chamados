@@ -134,7 +134,6 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         trelloService.addCommentToCard(ticket.getTrelloCardId(), "Equipe Flow (Admin)", request.getConteudo());
-        emailService.sendNewMessageNotificationEmail(ticket, request.getConteudo().trim());
 
         return saved;
     }
@@ -174,9 +173,6 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         log.info("Mensagem importada do Trello com sucesso para o chamado [{}]", ticket.getProtocolo());
-
-        // Envia notificação por e-mail para o solicitante com o link direto
-        emailService.sendNewMessageNotificationEmail(ticket, commentText.trim());
 
         return true;
     }
