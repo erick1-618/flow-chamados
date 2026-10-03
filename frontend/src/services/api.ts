@@ -106,6 +106,10 @@ export const api = {
     return res.json();
   },
 
+  async getAdminTicketDetail(adminKey: string, id: number): Promise<Ticket> {
+    return this.getAdminTicket(adminKey, id);
+  },
+
   async createAdminTicket(adminKey: string, input: CreateTicketInput): Promise<Ticket> {
     const res = await fetch(`${API_BASE}/admin/tickets`, {
       method: 'POST',

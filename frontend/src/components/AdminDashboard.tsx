@@ -140,7 +140,7 @@ export const AdminDashboard = ({
 
     const interval = setInterval(async () => {
       try {
-        const refreshed = await api.getAdminTicketDetail(adminKey, selectedTicket.id);
+        const refreshed = await api.getAdminTicket(adminKey, selectedTicket.id);
         const statusChanged = refreshed.status !== selectedTicket.status;
         const messagesCountChanged = (refreshed.messages?.length || 0) !== (selectedTicket.messages?.length || 0);
 
