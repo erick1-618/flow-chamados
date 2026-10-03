@@ -35,7 +35,30 @@ public class TrelloWebhookController {
         try {
             JsonNode action = payload.path("action");
             JsonNode data = action.path("data");
+            String actionType = action.path("type").asText("");
 
+            // 1. Processamento de Comentários no Card (Trello -> Flow)
+            if ("commentCard".equalsIgnoreCase(actionType)) {
+                String commentText = data.path("text").asText("").trim();
+                if (commentText.isEmpty()) {
+                    commentText = data.path("comment").path("text").asText("").trim();
+                }
+
+                // Evita loops: ignora comentários originados pelo próprio Flow
+                if (commentText.isBlank() || commentText.contains("via Flow]:")) {
+                    return ResponseEntity.ok("Ignorado: Comentario originado pelo proprio Flow ou vazio");
+                }
+
+                String cardId = data.path("card").path("id").asText(null);
+                String cardName = data.path("card").path("name").asText(null);
+
+                boolean messageAdded = ticketService.addMessageFromTrello(cardId, cardName, commentText);
+                return ResponseEntity.ok(messageAdded
+                        ? "Comentario do Trello sincronizado para o chamado com sucesso"
+                        : "Card ignorado: nao corresponde a nenhum chamado");
+            }
+
+            // 2. Processamento de Transição de Listas / Exclusão
             boolean isListChange = false;
             String listAfterId = null;
 
@@ -61,7 +84,7 @@ public class TrelloWebhookController {
                 return ResponseEntity.ok(updated ? "Status atualizado com sucesso" : "Processado sem alteracao");
             }
 
-            return ResponseEntity.ok("Acao ignorada: nao e transicao de lista");
+            return ResponseEntity.ok("Acao ignorada: nao e transicao de lista nem comentario");
         } catch (Exception ex) {
             log.error("Erro ao processar webhook do Trello: {}", ex.getMessage(), ex);
             return ResponseEntity.ok("Erro capturado");

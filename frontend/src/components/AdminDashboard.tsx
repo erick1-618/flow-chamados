@@ -134,6 +134,27 @@ export const AdminDashboard = ({
     }
   }, [targetTicketProto, tickets]);
 
+  // Atualização periódica silenciosa do modal de detalhes (se estiver aberto)
+  useEffect(() => {
+    if (!selectedTicket?.id || !adminKey || !isAdminAuth) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const refreshed = await api.getAdminTicketDetail(adminKey, selectedTicket.id);
+        const statusChanged = refreshed.status !== selectedTicket.status;
+        const messagesCountChanged = (refreshed.messages?.length || 0) !== (selectedTicket.messages?.length || 0);
+
+        if (statusChanged || messagesCountChanged) {
+          setSelectedTicket(refreshed);
+        }
+      } catch {
+        // Silencioso
+      }
+    }, 7000);
+
+    return () => clearInterval(interval);
+  }, [selectedTicket?.id, selectedTicket?.status, selectedTicket?.messages?.length, adminKey, isAdminAuth]);
+
 
   // Enviar resposta administrativa
   const handleSendAdminReply = async (e: React.FormEvent) => {

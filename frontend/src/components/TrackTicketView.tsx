@@ -33,6 +33,31 @@ export const TrackTicketView = ({
     if (initialEmail) setEmail(initialEmail);
   }, [initialEmail]);
 
+  // Atualização periódica silenciosa para receber novas respostas da equipe (via Trello ou Admin)
+  useEffect(() => {
+    if (!ticketAtual?.protocolo || !ticketAtual?.solicitanteEmail) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const refreshed = await api.trackTicket({
+          protocolo: ticketAtual.protocolo,
+          email: ticketAtual.solicitanteEmail,
+        });
+
+        const statusChanged = refreshed.status !== ticketAtual.status;
+        const messagesCountChanged = (refreshed.messages?.length || 0) !== (ticketAtual.messages?.length || 0);
+
+        if (statusChanged || messagesCountChanged) {
+          onTicketLoaded(refreshed);
+        }
+      } catch {
+        // Ignora silenciosamente erros temporários de conexão
+      }
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [ticketAtual?.protocolo, ticketAtual?.solicitanteEmail, ticketAtual?.status, ticketAtual?.messages?.length, onTicketLoaded]);
+
   const [novaMensagem, setNovaMensagem] = useState('');
   const [enviandoMensagem, setEnviandoMensagem] = useState(false);
 

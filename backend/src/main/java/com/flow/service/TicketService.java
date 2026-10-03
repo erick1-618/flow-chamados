@@ -134,7 +134,51 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         trelloService.addCommentToCard(ticket.getTrelloCardId(), "Equipe Flow (Admin)", request.getConteudo());
+        emailService.sendNewMessageNotificationEmail(ticket, request.getConteudo().trim());
+
         return saved;
+    }
+
+    @Transactional
+    public boolean addMessageFromTrello(String trelloCardId, String cardName, String commentText) {
+        if (commentText == null || commentText.isBlank()) return false;
+
+        Optional<Ticket> ticketOpt = ticketRepository.findByTrelloCardId(trelloCardId);
+        if (ticketOpt.isEmpty() && cardName != null) {
+            Matcher matcher = PROTOCOL_PATTERN.matcher(cardName);
+            if (matcher.find()) {
+                String parsedProtocol = matcher.group(1);
+                ticketOpt = ticketRepository.findByProtocolo(parsedProtocol);
+            }
+        }
+
+        if (ticketOpt.isEmpty()) {
+            return false;
+        }
+
+        Ticket ticket = ticketOpt.get();
+
+        // Evita mensagens duplicadas em caso de retentativa de entrega do webhook nos últimos 15s
+        LocalDateTime fifteenSecondsAgo = LocalDateTime.now().minusSeconds(15);
+        boolean duplicate = messageRepository.existsByTicketIdAndConteudoAndCreatedAtAfter(
+                ticket.getId(), commentText.trim(), fifteenSecondsAgo);
+        if (duplicate) {
+            log.info("Comentário do Trello já registrado recentemente para o chamado [{}] (idempotente)", ticket.getProtocolo());
+            return true;
+        }
+
+        Message message = new Message(ticket, MessageAuthor.ADMIN, commentText.trim());
+        messageRepository.save(message);
+
+        ticket.setUpdatedAt(LocalDateTime.now());
+        ticketRepository.save(ticket);
+
+        log.info("Mensagem importada do Trello com sucesso para o chamado [{}]", ticket.getProtocolo());
+
+        // Envia notificação por e-mail para o solicitante com o link direto
+        emailService.sendNewMessageNotificationEmail(ticket, commentText.trim());
+
+        return true;
     }
 
     @Transactional
